@@ -239,7 +239,7 @@ export default function PostDisasterPage() {
           aria-label="post-disaster data tabs"
         >
           <Tab label="Data Entry" />
-          <Tab label="Update Feed" />
+          <Tab label="Shared Feed" />
           <Tab label="Social Media Monitor" />
         </Tabs>
       </Box>
