@@ -1,162 +1,96 @@
-# Tri-Aid: Rapid Mapping and AI-Powered Disaster Assessment Platform
+# DisasterLens AI: AI-Powered Disaster Assessment Platform
 
-## 1) Motivation / Goal
+DisasterLens AI (also known as Tri-Aid) is a comprehensive disaster response platform that bridges the critical information gap during the first 48 hours after a disaster occurs. The platform combines pre-disaster mapping, real-time post-disaster data collection, and advanced AI analysis to generate rapid, actionable disaster assessment reports.
 
-After earthquakes, floods, or other disasters, response efforts are often delayed because data is  
-slow to arrive, incomplete, or hard to access. Government reports may take weeks, while NGOs  
-and local volunteers don't have the tools to assess needs quickly.
+![DisasterLens AI Platform](https://via.placeholder.com/800x400?text=DisasterLens+AI+Platform)
 
-This challenge aims to build a digital platform that helps communities and responders work  
-together to create a clear picture of the disaster within 48 hours.
+## What DisasterLens AI Solves
 
-The platform should:
+When disasters strike, emergency responders and aid organizations often struggle with:
+- Incomplete, delayed, or hard-to-access information
+- Disconnected data sources and formats
+- Lack of coordinated situation awareness
+- Inability to quickly determine where resources are most needed
 
-- Map what the community looked like before the disaster (schools, shelters,  
-  hospitals, population).  
-- Add updates from after the disaster (what's damaged, where help is needed).  
-- Collect and organize all this information so it can be used by an AI tool (like  
-  ChatGPT) to automatically generate a situation report.  
-- Publish a short, clear report that shows what's happening and what's needed — fast.  
+DisasterLens AI addresses these challenges by creating a unified platform where community members and professional responders can collaborate to build a comprehensive disaster assessment within 48 hours.
 
-This way, aid reaches the right people, in the right places, at the right time.
+## How It Works
 
----
+### 1. Pre-Disaster Baseline (Alpha Team)
 
-## 2) Key Features
+The platform establishes baseline data about communities before disasters strike:
 
-### Before the Disaster (Alpha Team)
+- **Automated Location Mapping**: Uses OpenStreetMap to gather data about critical infrastructure (hospitals, schools, shelters, etc.)
+- **Population Data Integration**: Incorporates demographic information for affected areas
+- **Risk Assessment**: Identifies vulnerable locations and populations based on historical and geographical data
 
-Think of this team as the "setup crew" that creates a detailed map of the community:
+### 2. Post-Disaster Data Collection (Bravo Team)
 
-- Search any location and automatically pull in public data (population, key buildings, etc.).  
-- Use tools to gather open data from local government websites.  
-- Enter and save that data in an organized format.  
+When a disaster occurs, the platform rapidly collects information through multiple channels:
 
-### After the Disaster (Bravo Team)
+- **Social Media Monitoring**: Aggregates and filters social media posts related to the disaster
+- **News Source Integration**: Extracts relevant information from news articles and reports
+- **Field Report Submission**: Mobile-optimized forms for on-site responders to submit observations
+- **Damage Assessment**: Structured data collection for categorizing damage levels to infrastructure
 
-This team focuses on "what's happening now":
+### 3. AI-Powered Analysis
 
-- Gather updates from social media, news articles, and government announcements.  
-- Volunteers and field teams send in photos, observations, and GPS locations.  
-- A shared portal lets users sort through and verify this info.  
-- A map shows which places are working, damaged, or still need help.  
+The platform leverages advanced AI to process and analyze collected data:
 
-### Shared Tools
+- **Data Verification**: Cross-references information from multiple sources to ensure accuracy
+- **Information Categorization**: Automatically tags and organizes incoming data
+- **Retrieval-Augmented Generation (RAG)**: Uses Google's Gemini AI to generate comprehensive situational reports
+- **Time-Series Analysis**: Tracks changes in conditions over time to identify trends
 
-- Easy-to-use forms for entering data from anywhere.  
-- A "scorecard" to show how complete the data is for each area.  
-- A tool that cleans and organizes the data so an AI can use it.  
-- Connect to ChatGPT or similar AI to summarize all the info into a readable report.  
+### 4. Actionable Outputs
 
----
+DisasterLens AI delivers several key outputs:
 
-## 3) Project Setup
+- **Interactive Disaster Maps**: Visual representation of affected areas with damage assessment overlays
+- **Resource Allocation Recommendations**: AI-generated suggestions for prioritizing aid distribution
+- **Comprehensive Situation Reports**: Clear, concise summaries of current conditions, needs, and response activities
+- **API Integration**: Allows other disaster response tools to utilize the gathered data
 
-### Prerequisites
-- Node.js 18+ and npm/pnpm for the frontend
-- Python 3.10+ for the backend
-- API keys for Gemini AI (for report generation)
+## Technical Architecture
 
-### Installation
+DisasterLens AI consists of two main components:
 
-1. Clone the repository
-   ```bash
-   git clone https://github.com/yourusername/disasterlens-ai.git
-   cd disasterlens-ai
-   ```
+### Frontend (React Application)
+- Interactive maps using MapLibre GL
+- Intuitive data entry forms
+- Real-time social media monitoring
+- Report generation and viewing interfaces
+- Responsive design for field use on mobile devices
 
-2. Set up the backend
-   ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
+### Backend (FastAPI Application)
+- RESTful API endpoints for data collection and retrieval
+- OpenStreetMap integration for location data
+- Social media and news article scraping
+- Background task processing for resource-intensive operations
+- Google Gemini AI integration for report generation
 
-3. Set up the frontend
-   ```bash
-   cd frontend
-   pnpm install  # or npm install
-   ```
+## Real-World Impact
 
-4. Create environment variables
-   - Create a `.env` file in the backend directory with:
-     ```
-     GEMINI_API_KEY=your_gemini_api_key
-     ```
+DisasterLens AI makes disaster response:
 
-### Running the Application
+- **Faster**: Critical information available in hours instead of days or weeks
+- **Smarter**: AI-powered analysis ensures resources go where they're most needed
+- **More Inclusive**: Enables community participation in disaster assessment
+- **More Coordinated**: Creates a single source of truth for all responders
+- **More Adaptable**: Works across different disaster types and geographical regions
 
-1. Start the backend server
-   ```bash
-   cd backend
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   python main.py
-   ```
+## Getting Started
 
-2. Start the frontend development server
-   ```bash
-   cd frontend
-   pnpm dev  # or npm run dev
-   ```
+For developers interested in contributing to or using DisasterLens AI, detailed setup instructions are available in the [frontend](/frontend/README.md) and [backend](/backend/README.md) directories.
 
-3. Access the application at http://localhost:5173
+## Contributing
 
-## 4) Project Structure
+DisasterLens AI is designed to be community-driven. We welcome contributions from developers, disaster response professionals, and community organizers. See our [contributing guidelines](/CONTRIBUTING.md) for more information.
 
-```
-DisasterLens AI/
-├── README.md           # Main project documentation
-├── backend/            # FastAPI backend application
-│   ├── main.py         # Entry point for backend server
-│   ├── requirements.txt# Python dependencies
-│   ├── app/            # Backend application modules
-│   ├── data/           # Stored disaster and location data
-│   └── ...
-└── frontend/           # React frontend application
-    ├── src/            # Frontend source code
-    │   ├── components/ # React components
-    │   ├── pages/      # Application pages
-    │   └── ...
-    ├── package.json    # Frontend dependencies
-    └── ...
-```
+## License
 
-## 5) Hints & Resources
+This project is licensed under the MIT License - see the [LICENSE](/LICENSE) file for details.
 
-You can use:
+## Acknowledgments
 
-- Mapping tools like Leaflet or Mapbox to build interactive maps.  
-- Data scraping tools like `snscrape` (for social media) or `Newspaper3k` (for online news).  
-- Survey and field tools like KoboToolbox to gather field reports.  
-- Python libraries like `pandas` and `LangChain` to organize and format data for GPT.  
-
-To generate the summary report, consider using **Retrieval-Augmented Generation (RAG)** — a  
-method that helps AI summarize only what's in the data (reduces hallucinations).
-
-**Organizing team:**  
-Shreeansh Agawal, Linn Bieske, Andrea Jimenez, Kai Wiederhold, Lisa Sklyarova
-
----
-
-## 6) Evaluation Criteria
-
-| What Will Be Evaluated        | What Good Looks Like                                                |
-|------------------------------|----------------------------------------------------------------------|
-| Pre-Disaster Map Quality      | Accurate, complete baseline maps for each area                      |
-| Post-Disaster Data Collection | Timely updates from social/news sources + structured field input     |
-| Data Cleanliness & Structure  | Clean, labeled, AI-ready data                                       |
-| 48-Hour Summary Output        | A clear, concise disaster report is produced within 48 hours        |
-| Map & Interface Usability     | Easy to navigate, intuitive filters, and contribution tools          |
-| Scalability                   | Can work for other regions and future disasters                     |
-
----
-
-## ✨ Why This Matters
-
-A working Tri-Aid platform would make disaster response faster, smarter, and more inclusive —  
-giving everyday people the tools to help, no matter where they are. It would also ensure that  
-emergency aid goes where it's most needed — not just where information arrives first.
-
-**Organizing team:**  
-Shreeansh Agawal, Linn Bieske, Andrea Jimenez, Kai Wiederhold, Lisa Sklyarova
+DisasterLens AI was developed by Shreeansh Agawal, Linn Bieske, Andrea Jimenez, Kai Wiederhold, and Lisa Sklyarova in response to the growing need for better information management during disaster events.

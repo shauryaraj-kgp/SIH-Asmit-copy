@@ -1,14 +1,86 @@
 # DisasterLens AI - Backend
 
-The backend component of the DisasterLens AI (Tri-Aid) platform is built with FastAPI and provides APIs for pre-disaster data collection, post-disaster information gathering, and report generation.
+The backend component of DisasterLens AI provides the data collection, processing, and AI analysis capabilities that power the platform's disaster assessment functionality.
 
-## Features
+## What the Backend Does
 
-- **Pre-Disaster Data Collection**: Gathers baseline data about a location (hospitals, schools, shelters, etc.) using OpenStreetMap
-- **Disaster Data Discovery**: Searches for and aggregates information about ongoing disasters
-- **Report Generation**: Creates comprehensive disaster assessment reports using AI
-- **Background Processing**: Handles resource-intensive tasks asynchronously
-- **REST API**: Provides a clean interface for the frontend to interact with
+The DisasterLens AI backend serves as the data processing engine for the platform, enabling:
+
+1. **Pre-disaster baseline data collection** - Gathering and storing information about communities before disasters occur
+2. **Post-disaster information aggregation** - Collecting, verifying, and organizing data from various sources during emergencies
+3. **AI-powered report generation** - Creating comprehensive situation reports using gathered data
+4. **API services** - Providing structured data access to the frontend application
+
+## Key Components
+
+### OpenStreetMap Integration
+
+The backend uses OpenStreetMap to automatically collect baseline data about communities:
+
+- **Location Search**: Converts location queries into geographic coordinates
+- **Points of Interest**: Identifies critical infrastructure (hospitals, schools, shelters)
+- **Boundary Data**: Determines the geographic area affected by disasters
+- **Spatial Analysis**: Calculates areas impacted and population affected
+
+### Disaster Data Discovery
+
+When a disaster occurs, the backend:
+
+- **Crawls News Sources**: Extracts relevant information from news articles
+- **Monitors Social Media**: Aggregates posts related to the disaster
+- **Processes Field Reports**: Organizes data submitted by on-site responders
+- **Verifies Information**: Cross-references data from multiple sources
+
+### AI Report Generation
+
+The backend leverages Google's Gemini AI to:
+
+- **Structure Raw Data**: Organizes scattered information into a coherent format
+- **Generate Summaries**: Creates concise overviews of the situation
+- **Identify Priorities**: Highlights areas of greatest need
+- **Create Recommendations**: Suggests resource allocation strategies
+
+### Background Processing
+
+Resource-intensive tasks are handled asynchronously:
+
+- **Job Queue System**: Manages data processing tasks without blocking API responses
+- **Progress Tracking**: Provides updates on long-running operations
+- **Error Handling**: Gracefully recovers from processing failures
+- **Caching**: Stores intermediate results to speed up repeated operations
+
+## Technical Implementation
+
+### Core Technologies
+
+- **FastAPI**: High-performance API framework with automatic documentation
+- **Pydantic**: Data validation and settings management
+- **Google Generative AI**: AI-powered text generation and analysis
+- **OSMnx**: OpenStreetMap network analysis
+- **GeoPandas**: Geospatial data processing
+- **Newspaper3k**: News article scraping and extraction
+
+### API Structure
+
+The backend exposes several key endpoints:
+
+- **Pre-Disaster Collection**: `/api/pre-disaster/collect` - Gathers baseline community data
+- **Disaster Discovery**: `/api/discover` - Searches for disaster-related information
+- **Report Generation**: `/api/generate-report` - Creates comprehensive situation reports
+- **Job Management**: `/api/job/{job_id}` - Tracks progress of background tasks
+- **Report Retrieval**: `/api/reports` and `/api/report/{report_id}` - Accesses generated reports
+
+### Data Flow
+
+1. **Data Collection**: External data is gathered through API integrations and web scraping
+2. **Processing Pipeline**: Raw data is cleaned, structured, and enriched
+3. **AI Analysis**: Processed data is sent to AI models for analysis and report generation
+4. **Storage**: Results are saved in structured formats (JSON, Markdown, GeoJSON)
+5. **API Access**: Processed data is made available to the frontend through REST endpoints
+
+## Development Setup
+
+For detailed setup instructions, see the Getting Started section below.
 
 ## Getting Started
 

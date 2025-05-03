@@ -1,15 +1,102 @@
 # DisasterLens AI - Frontend
 
-The frontend component of the DisasterLens AI (Tri-Aid) platform is a modern React application that provides an intuitive interface for disaster assessment and reporting. It's built with React 19, TypeScript, and Material UI.
+The frontend component of DisasterLens AI is an interactive React application that provides an intuitive interface for users to visualize, analyze, and contribute to disaster assessment information.
 
-## Features
+## What the Frontend Does
 
-- **Interactive Maps**: Visualize pre and post-disaster data using MapLibre GL
-- **Disaster Reports**: View AI-generated disaster assessment reports
-- **Pre-Disaster Data Collection**: Interface for collecting and viewing pre-disaster information
-- **Post-Disaster Assessment**: Tools for collecting and analyzing post-disaster data
-- **Social Media Feed**: Monitor social media for disaster-related information
-- **Responsive Design**: Works on desktop and mobile devices
+The DisasterLens AI frontend serves as the user interface of the platform, enabling:
+
+1. **Interactive Disaster Mapping** - Visualizing pre and post-disaster conditions on dynamic maps
+2. **Data Collection & Contribution** - Providing forms for field responders to submit observations
+3. **Report Visualization** - Displaying AI-generated disaster assessment reports in readable formats
+4. **Workflow Management** - Guiding users through the disaster assessment process
+
+## Key Features
+
+### Interactive Maps
+
+The map interface is the central feature of the frontend:
+
+- **Pre-Disaster Baseline**: Displays critical infrastructure (hospitals, schools, shelters) before disasters
+- **Post-Disaster Overlays**: Shows damage assessment data collected after disasters
+- **Location-Based Filtering**: Allows users to focus on specific geographic areas
+- **Layer Controls**: Toggles different data sets for customized views
+
+![Map Interface](https://via.placeholder.com/600x300?text=DisasterLens+Map+Interface)
+
+### Data Collection Forms
+
+Structured data entry forms enable:
+
+- **Field Observations**: Mobile-optimized forms for on-site responders
+- **Damage Assessment**: Standardized scales for evaluating infrastructure damage
+- **Media Uploads**: Support for photos and videos from disaster zones
+- **Verification Workflows**: Processes to confirm and validate submitted information
+
+### Social Media Feed
+
+The social media monitoring component:
+
+- **Disaster-Related Posts**: Filters and displays relevant social media content
+- **Sentiment Analysis**: Categorizes posts by urgency and information type
+- **Timeline Views**: Organizes posts chronologically to track evolving situations
+- **Source Verification**: Highlights posts from official or trusted accounts
+
+### Report Dashboard
+
+The reporting dashboard:
+
+- **AI-Generated Reports**: Displays comprehensive situation summaries
+- **Visual Analytics**: Charts and graphs showing disaster impact metrics
+- **Resource Needs**: Highlights areas requiring immediate assistance
+- **Time-Series Data**: Shows how conditions change over the course of the disaster response
+
+## Technical Implementation
+
+### Core Technologies
+
+- **React 19**: Modern React with hooks and concurrent rendering
+- **TypeScript**: Type-safe JavaScript for robust code quality
+- **Material UI 7**: Component library for consistent design
+- **MapLibre GL**: Open-source mapping library for interactive maps
+- **Vite**: Next-generation frontend build tool
+- **React Router**: Client-side routing for single-page application
+
+### Application Structure
+
+The frontend follows a modular architecture:
+
+- **Components**: Reusable UI building blocks
+- **Pages**: Complete screen views assembled from components
+- **Services**: API integration with the backend
+- **Contexts**: State management for application-wide data
+- **Hooks**: Custom React hooks for shared functionality
+
+### Responsive Design
+
+The interface is fully responsive:
+
+- **Desktop**: Full-featured interface for emergency operations centers
+- **Tablet**: Touch-optimized layouts for field command posts
+- **Mobile**: Streamlined interface for on-site responders
+- **Offline Support**: Limited functionality when network connectivity is poor
+
+### User Experience
+
+The frontend prioritizes usability in high-stress situations:
+
+- **Clear Information Hierarchy**: Critical information is easily accessible
+- **Intuitive Navigation**: Minimal learning curve for emergency responders
+- **Accessibility**: WCAG compliance for users of all abilities
+- **Error Handling**: Graceful recovery from connectivity or server issues
+
+## Integration with Backend
+
+The frontend communicates with the backend through:
+
+1. **REST API**: Standard HTTP requests for data operations
+2. **Background Jobs**: Long-running tasks with progress monitoring
+3. **Real-time Updates**: Data refreshing for timely information
 
 ## Getting Started
 
@@ -48,58 +135,3 @@ pnpm build
 ```
 
 The built files will be in the `dist` directory.
-
-## Project Structure
-
-- `src/` - Source code
-  - `components/` - Reusable UI components
-    - `feeds/` - Social media feed components
-    - `forms/` - Data entry forms
-    - `map/` - Map visualization components
-    - `reports/` - Report viewing components
-    - `settings/` - Settings-related components
-  - `contexts/` - React context providers
-  - `hooks/` - Custom React hooks
-  - `layouts/` - Page layout components
-  - `pages/` - Application pages
-    - `Dashboard.tsx` - Main dashboard
-    - `MapPage.tsx` - Interactive map view
-    - `PostDisasterPage.tsx` - Post-disaster data collection
-    - `PreDisasterPage.tsx` - Pre-disaster data collection
-    - `ReportsPage.tsx` - Disaster reports
-    - `SettingsPage.tsx` - Application settings
-  - `services/` - API services and data fetching
-  - `theme/` - UI theme configuration
-  - `utils/` - Helper functions and utilities
-
-## Key Technologies
-
-- **React** - UI library
-- **TypeScript** - Type-safe JavaScript
-- **Material UI** - Component library
-- **MapLibre GL** - Open-source map rendering
-- **Vite** - Build tool and development server
-- **React Router** - Client-side routing
-- **Axios** - HTTP client
-
-## Adding New Features
-
-1. Create new components in the appropriate directories
-2. Add API services in the `services` directory
-3. Update routes in the main application if needed
-
-## Best Practices
-
-- Use TypeScript for all new components and functions
-- Follow the established component structure
-- Use Material UI components for consistent design
-- Implement responsive layouts for all new views
-- Write descriptive commit messages
-
-## Deployment
-
-The frontend can be deployed to any static site hosting service after building:
-
-1. Run `pnpm build`
-2. Deploy the contents of the `dist` directory to your hosting provider
-3. Ensure proper configuration for the API base URL in production environment

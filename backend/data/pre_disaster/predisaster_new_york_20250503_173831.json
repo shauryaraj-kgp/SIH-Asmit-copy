@@ -1,0 +1,24 @@
+{
+  "location": "New york",
+  "timestamp": "2025-05-03T17:38:31.445340",
+  "poi_data": {
+    "hospital": [],
+    "school": [],
+    "shelter": [],
+    "fire_station": [],
+    "police": [],
+    "water": [],
+    "power": []
+  },
+  "boundary_info": {
+    "name": "New york",
+    "file_path": "data/boundaries/new_york_boundary.geojson",
+    "area_sqkm": 1218.12,
+    "bbox": [
+      -74.258843,
+      40.476578,
+      -73.700233,
+      40.91763
+    ]
+  }
+}
