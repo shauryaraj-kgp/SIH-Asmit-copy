@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Paper, Typography, Button, Divider,
   Stepper, Step, StepLabel, TextField, MenuItem,
@@ -13,6 +13,8 @@ import {
   CloudDownload, Check, LocationOn, LocalHospital,
   School, Home, WaterDrop, Construction, Warning
 } from '@mui/icons-material';
+import reportService from '../services/reportService';
+import ReactMarkdown from 'react-markdown';
 
 export default function ReportsPage() {
   const [activeStep, setActiveStep] = useState(0);
@@ -22,10 +24,53 @@ export default function ReportsPage() {
   const [selectedSections, setSelectedSections] = useState<string[]>([
     'overview', 'infrastructure', 'medical', 'shelter', 'needs'
   ]);
+  const [selectedDisaster, setSelectedDisaster] = useState<{ name: string, date: string } | null>(null);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
   const [reportGenerated, setReportGenerated] = useState(false);
+  const [reportJobId, setReportJobId] = useState<string | null>(null);
+  const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    loadRecentReports();
+  }, []);
+  
+  useEffect(() => {
+    let intervalId: number | null = null;
+    
+    if (reportJobId) {
+      intervalId = window.setInterval(async () => {
+        try {
+          const status = await reportService.getJobStatus(reportJobId);
+          setGenerationProgress(status.progress);
+          
+          if (status.status === 'completed') {
+            setIsGenerating(false);
+            setReportGenerated(true);
+            loadRecentReports(); // Refresh the list
+            clearInterval(intervalId!);
+            
+            // Load the generated report content
+            const report = await reportService.getReport(reportJobId);
+            setSelectedReportId(reportJobId);
+          } else if (status.status === 'error') {
+            setIsGenerating(false);
+            clearInterval(intervalId!);
+            console.error('Report generation failed:', status.error);
+            // You could show an error message to the user here
+          }
+        } catch (error) {
+          console.error('Error checking job status:', error);
+        }
+      }, 2000);
+    }
+    
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [reportJobId]);
   
   const handleNext = () => {
     setActiveStep(prevStep => prevStep + 1);
@@ -55,32 +100,46 @@ export default function ReportsPage() {
     );
   };
   
-  const handleGenerateReport = () => {
-    setIsGenerating(true);
-    
-    // Simulate report generation process
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      setGenerationProgress(progress);
+  const handleGenerateReport = async () => {
+    try {
+      setIsGenerating(true);
+      setGenerationProgress(0);
       
-      if (progress === 100) {
-        clearInterval(interval);
-        setIsGenerating(false);
-        setReportGenerated(true);
-      }
-    }, 500);
+      // If no specific disaster is selected, use the report type as a query
+      const query = `${selectedDisaster?.name || ''} ${selectedDisaster?.date || ''} ${reportType}`.trim();
+      
+      const response = await reportService.generateReport({ query });
+      setReportJobId(response.job_id);
+    } catch (error) {
+      console.error('Error generating report:', error);
+      setIsGenerating(false);
+    }
   };
   
-  // Define steps for report generation process
-  const steps = ['Select Report Type', 'Choose Parameters', 'Configure Sections', 'Generate Report'];
+  const loadRecentReports = async () => {
+    try {
+      const reports = await reportService.getRecentReports();
+      setRecentReports(reports);
+    } catch (error) {
+      console.error('Error loading recent reports:', error);
+    }
+  };
   
-  // Sample recent reports data
-  const recentReports = [
-    { id: 1, name: 'Initial Disaster Assessment', date: '2025-05-01 14:30', type: 'Situational' },
-    { id: 2, name: '24-Hour Update Report', date: '2025-05-02 12:00', type: 'Update' },
-    { id: 3, name: 'Infrastructure Damage Report', date: '2025-05-02 16:45', type: 'Focused' }
-  ];
+  const loadReport = async (reportId: string) => {
+    try {
+      setSelectedReportId(reportId);
+      setReportGenerated(true);
+      
+      const report = await reportService.getReport(reportId);
+      // Replace the existing report content with the loaded report
+      setReportGenerated(true);
+      setActiveStep(3); // Jump to the report view step
+    } catch (error) {
+      console.error('Error loading report:', error);
+    }
+  };
+  
+  const steps = ['Select Report Type', 'Choose Parameters', 'Configure Sections', 'Generate Report'];
   
   return (
     <Box>
@@ -92,7 +151,6 @@ export default function ReportsPage() {
       </Typography>
       
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-        {/* Left column - Report Generator */}
         <Box sx={{ flexBasis: { xs: '100%', md: '65%' } }}>
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom>Report Generator</Typography>
@@ -448,7 +506,6 @@ export default function ReportsPage() {
                       
                       <Divider sx={{ mb: 2 }} />
                       
-                      {/* Example report content with accordions */}
                       <Box>
                         <Accordion defaultExpanded>
                           <AccordionSummary expandIcon={<ExpandMore />}>
@@ -538,7 +595,6 @@ export default function ReportsPage() {
           </Paper>
         </Box>
         
-        {/* Right column - Recent Reports */}
         <Box sx={{ flexBasis: { xs: '100%', md: '30%' } }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>Recent Reports</Typography>
@@ -547,7 +603,7 @@ export default function ReportsPage() {
                 <ListItem 
                   key={report.id}
                   secondaryAction={
-                    <IconButton edge="end" size="small">
+                    <IconButton edge="end" size="small" onClick={() => loadReport(report.id)}>
                       <CloudDownload fontSize="small" />
                     </IconButton>
                   }
@@ -557,14 +613,15 @@ export default function ReportsPage() {
                     pl: 2,
                     mb: 1,
                     borderRadius: '4px',
+                    backgroundColor: selectedReportId === report.id ? 'action.selected' : 'inherit'
                   }}
                 >
                   <ListItemIcon sx={{ minWidth: 36 }}>
                     <Description fontSize="small" />
                   </ListItemIcon>
                   <ListItemText 
-                    primary={report.name}
-                    secondary={`${report.type} • ${report.date}`}
+                    primary={report.title}
+                    secondary={`${report.date}`}
                   />
                 </ListItem>
               ))}
