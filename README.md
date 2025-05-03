@@ -83,9 +83,20 @@ DisasterLens AI makes disaster response:
 
 For developers interested in contributing to or using DisasterLens AI, detailed setup instructions are available in the [frontend](/frontend/README.md) and [backend](/backend/README.md) directories.
 
-## Contributing
+## 💡 Creators
+This project was developed by:
 
-DisasterLens AI is designed to be community-driven. We welcome contributions from developers, disaster response professionals, and community organizers. See our [contributing guidelines](/CONTRIBUTING.md) for more information.
+- **Pratyay Ganguly**  
+  [![GitHub](https://img.shields.io/badge/GitHub-%2312100E.svg?logo=github&logoColor=white)](https://github.com/drcocktail) [![LinkedIn](https://img.shields.io/badge/LinkedIn-%230A66C2.svg?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/pratyayganguly/)  
+  Undergraduate Student, Department of Electrical Engineering, IIT Kharagpur
+  
+- **Asmit Chauhan**  
+  [![GitHub](https://img.shields.io/badge/GitHub-%2312100E.svg?logo=github&logoColor=white)](https://github.com/RocketFuel810) [![LinkedIn](https://img.shields.io/badge/LinkedIn-%230A66C2.svg?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/asmit-chauhan-2606612a8/)  
+  Undergraduate Student, Department of Electronics and Electrical Communication Engineering, IIT Kharagpur 
+
+- **Malyadip Pal**  
+  [![GitHub](https://img.shields.io/badge/GitHub-%2312100E.svg?logo=github&logoColor=white)](https://github.com/Neural-Knight) [![LinkedIn](https://img.shields.io/badge/LinkedIn-%230A66C2.svg?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/malyadip-pal-bb034726a/)  
+  Undergraduate Student, Department of Electrical Engineering, IIT Kharagpur
 
 ## License
 
@@ -93,4 +104,4 @@ This project is licensed under the MIT License - see the [LICENSE](/LICENSE) fil
 
 ## Acknowledgments
 
-DisasterLens AI was developed by Shreeansh Agawal, Linn Bieske, Andrea Jimenez, Kai Wiederhold, and Lisa Sklyarova in response to the growing need for better information management during disaster events.
+This challenge was developed as part of the GLOBAL MIT AI HACKATHON 2025. Shreeansh Agawal, Linn Bieske, Andrea Jimenez, Kai Wiederhold, and Lisa Sklyarova organized this event and created this challenge in response to the growing need for better information management during disaster events.
