@@ -172,6 +172,122 @@ const EXTERNAL_SOURCES = [
   }
 ];
 
+// Add mock data for location search results
+const MOCK_LOCATION_RESULTS: { [key: string]: PreDisasterLocation[] } = {
+  // Default mock data that will be shown for any search
+  default: [
+    {
+      id: 'mock_1',
+      name: 'General Hospital',
+      type: 'hospital',
+      latitude: 40.712776,
+      longitude: -74.005974,
+      occupancy: 500,
+      details: 'Major trauma center with 24/7 emergency services',
+      status: 'active',
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: 'mock_2',
+      name: 'Central High School',
+      type: 'school',
+      latitude: 40.714541,
+      longitude: -74.007455,
+      occupancy: 1500,
+      details: 'Large school with gymnasium suitable for emergency shelter',
+      status: 'active',
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: 'mock_3',
+      name: 'Community Center',
+      type: 'shelter',
+      latitude: 40.710086,
+      longitude: -74.004870,
+      occupancy: 350,
+      details: 'Designated emergency shelter with backup power',
+      status: 'active',
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: 'mock_4',
+      name: 'Main Fire Station',
+      type: 'fire_station',
+      latitude: 40.715231,
+      longitude: -74.009412,
+      details: 'Primary fire response unit with disaster response capabilities',
+      status: 'active',
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: 'mock_5',
+      name: 'Police Headquarters',
+      type: 'police',
+      latitude: 40.712559,
+      longitude: -74.012318,
+      details: 'Main police station with emergency coordination center',
+      status: 'active',
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: 'mock_6',
+      name: 'Water Treatment Facility',
+      type: 'waterSource',
+      latitude: 40.709571,
+      longitude: -74.001530,
+      details: 'Primary water treatment plant with 72hr backup systems',
+      status: 'active',
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: 'mock_7',
+      name: 'Power Substation Alpha',
+      type: 'infrastructure',
+      latitude: 40.718147,
+      longitude: -74.006571,
+      details: 'Critical power distribution node with redundant systems',
+      status: 'active',
+      lastUpdated: new Date().toISOString()
+    }
+  ],
+  // Specific mock data for New York
+  "new york": [
+    {
+      id: 'ny_1',
+      name: 'NYU Langone Medical Center',
+      type: 'hospital',
+      latitude: 40.742054,
+      longitude: -73.974096,
+      occupancy: 830,
+      details: 'Major medical center with specialized trauma unit',
+      status: 'active',
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: 'ny_2',
+      name: 'Stuyvesant High School',
+      type: 'school',
+      latitude: 40.717505,
+      longitude: -74.013443,
+      occupancy: 3200,
+      details: 'Large high school building with extensive facilities',
+      status: 'active',
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: 'ny_3',
+      name: 'Javits Convention Center',
+      type: 'shelter',
+      latitude: 40.757465,
+      longitude: -74.002256,
+      occupancy: 5000,
+      details: 'Large facility suitable for mass emergency shelter',
+      status: 'active',
+      lastUpdated: new Date().toISOString()
+    }
+  ]
+};
+
 export default function PreDisasterPage() {
   // Original state variables
   const [tabValue, setTabValue] = useState(0);
@@ -259,7 +375,7 @@ export default function PreDisasterPage() {
     setTabValue(newValue);
   };
   
-  // New handler for location search using OSM
+  // New handler for location search using mock data instead of OSM API
   const handleSearchLocation = async () => {
     if (!locationQuery) return;
     
@@ -275,86 +391,69 @@ export default function PreDisasterPage() {
         waterSources: 0
       });
       setCollectedLocations([]);
-      setJobId(null);
       
-      // Define structures to search for
-      const structures = [
-        "hospital", 
-        "school", 
-        "shelter", 
-        "fire_station", 
-        "police", 
-        "water", 
-        "power"
-      ];
-      
-      // Start OSM data collection
-      const response = await preDisasterService.collectLocationData({
-        location: locationQuery,
-        structures
-      });
-      
-      // Save job ID
-      setJobId(response.job_id);
-      
-      // Start polling job status
-      pollJobStatus(response.job_id);
+      // Simulate API call delay
+      setTimeout(() => {
+        // Increment progress periodically to simulate data collection
+        const simulateProgress = () => {
+          setAgentProgress(prev => {
+            const newProgress = prev + 10;
+            
+            // Update category progress
+            const progressByCategory = preDisasterService.calculateStructureProgress(
+              newProgress >= 100 ? "completed" : "collecting_poi", 
+              newProgress
+            );
+            setCollectionStatus(progressByCategory);
+            
+            return newProgress;
+          });
+        };
+        
+        // Simulate incremental progress updates
+        const interval = setInterval(() => {
+          setAgentProgress(prev => {
+            if (prev >= 100) {
+              clearInterval(interval);
+              return 100;
+            }
+            
+            const newProgress = prev + 10;
+            
+            // Update category progress
+            const progressByCategory = preDisasterService.calculateStructureProgress(
+              newProgress >= 100 ? "completed" : "collecting_poi", 
+              newProgress
+            );
+            setCollectionStatus(progressByCategory);
+            
+            return newProgress;
+          });
+        }, 500);
+        
+        // Complete the simulated data collection after a delay
+        setTimeout(() => {
+          clearInterval(interval);
+          setAgentProgress(100);
+          
+          // Use location-specific mock data if available, otherwise use default
+          const lowercaseQuery = locationQuery.toLowerCase();
+          let mockData = MOCK_LOCATION_RESULTS[lowercaseQuery] || MOCK_LOCATION_RESULTS.default;
+          
+          // Ensure we have locations
+          setCollectedLocations(mockData);
+          setIsAgentRunning(false);
+          
+          // Show dialog with results
+          setShowResultsDialog(true);
+          
+        }, 5000); // Complete after 5 seconds
+      }, 500); // Start after a short delay
       
     } catch (error) {
       console.error("Failed to start data collection:", error);
       setIsAgentRunning(false);
       setSnackbarMessage("Failed to start data collection. Please try again.");
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-    }
-  };
-  
-  // Function to poll job status
-  const pollJobStatus = async (jobId: string) => {
-    try {
-      const result = await preDisasterService.getJobStatus(jobId);
-      
-      // Update progress
-      setAgentProgress(result.progress);
-      
-      // Use our service's progress calculation for structured progress updates
-      const progressByCategory = preDisasterService.calculateStructureProgress(result.status, result.progress);
-      setCollectionStatus(progressByCategory);
-      
-      // Check if job is completed or errored
-      if (result.status === "completed") {
-        // Convert OSM data to PreDisasterLocation format
-        const locations = preDisasterService.convertOSMToLocationData(result.result);
-        
-        console.log("Collected locations:", locations);
-        
-        // Ensure locations is always an array
-        setCollectedLocations(Array.isArray(locations) ? locations : []);
-        setIsAgentRunning(false);
-        
-        // Only show dialog if we have data
-        if (locations && locations.length > 0) {
-          setShowResultsDialog(true);
-        } else {
-          // Show a message that no data was found
-          setSnackbarMessage(`No locations found for "${locationQuery}". Try a different search term.`);
-          setSnackbarSeverity('warning');
-          setSnackbarOpen(true);
-        }
-      } else if (result.status === "error") {
-        setIsAgentRunning(false);
-        setSnackbarMessage(`Error collecting data: ${result.error || "Unknown error"}`);
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-      } else {
-        // Continue polling with exponential backoff
-        const waitTime = result.status === "collecting_boundary" ? 2000 : 1000;
-        setTimeout(() => pollJobStatus(jobId), waitTime);
-      }
-    } catch (error) {
-      console.error("Error polling job status:", error);
-      setIsAgentRunning(false);
-      setSnackbarMessage("Failed to check data collection status. Please try again.");
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
