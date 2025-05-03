@@ -6,7 +6,8 @@ import {
   TableContainer, TableHead, TableRow, TablePagination,
   TableSortLabel, LinearProgress, Alert, CircularProgress,
   Card, CardContent, Stack, Stepper, Step, StepLabel,
-  Dialog, DialogTitle, DialogContent, DialogActions
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Snackbar
 } from '@mui/material';
 import { 
   Search, Add, FilterList, CloudDownload, 
@@ -14,6 +15,7 @@ import {
   LocationOn, CheckCircle, HighlightOff, LocalHospital,
   School, HomeWork, Engineering, WaterDrop
 } from '@mui/icons-material';
+import { preDisasterService } from '../services/preDisasterService';
 
 // Define the interface for pre-disaster location data
 interface PreDisasterLocation {
@@ -209,6 +211,13 @@ export default function PreDisasterPage() {
     count: number;
   }[]>([]);
   
+  // New state for OSM data collection
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'info' | 'warning'>('info');
+  const [lastJobStatus, setLastJobStatus] = useState<string>('');
+  
   // Table related handlers
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -240,64 +249,115 @@ export default function PreDisasterPage() {
       setSelectedTypes([...selectedTypes, type]);
     }
   };
+  
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
 
   // Tab change handler
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
   
-  // New handler for location search
-  const handleSearchLocation = () => {
+  // New handler for location search using OSM
+  const handleSearchLocation = async () => {
     if (!locationQuery) return;
     
-    setIsAgentRunning(true);
-    setAgentProgress(0);
-    setCollectionStatus({
-      hospitals: 0,
-      schools: 0,
-      infrastructure: 0,
-      shelters: 0,
-      waterSources: 0
-    });
-    setCollectedLocations([]);
-    
-    // Simulate agent data collection
-    // In a real implementation, this would be an API call to the backend agent
-    const simulateCollection = () => {
-      const interval = setInterval(() => {
-        setAgentProgress(prev => {
-          const newProgress = prev + Math.random() * 5;
-          if (newProgress >= 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-              // Generate unique IDs for the new data to avoid conflicts when adding to database
-              const locationsWithUniqueIds = SAMPLE_LOCATIONS.map(location => ({
-                ...location,
-                id: `${Date.now()}-${location.id}` // Ensure unique IDs
-              }));
-              
-              // Simulate data found by agent
-              setCollectedLocations(locationsWithUniqueIds);
-              setShowResultsDialog(true);
-              setIsAgentRunning(false);
-            }, 500);
-            return 100;
-          }
-          return newProgress;
-        });
+    try {
+      // Reset states
+      setIsAgentRunning(true);
+      setAgentProgress(0);
+      setCollectionStatus({
+        hospitals: 0,
+        schools: 0,
+        infrastructure: 0,
+        shelters: 0,
+        waterSources: 0
+      });
+      setCollectedLocations([]);
+      setJobId(null);
+      
+      // Define structures to search for
+      const structures = [
+        "hospital", 
+        "school", 
+        "shelter", 
+        "fire_station", 
+        "police", 
+        "water", 
+        "power"
+      ];
+      
+      // Start OSM data collection
+      const response = await preDisasterService.collectLocationData({
+        location: locationQuery,
+        structures
+      });
+      
+      // Save job ID
+      setJobId(response.job_id);
+      
+      // Start polling job status
+      pollJobStatus(response.job_id);
+      
+    } catch (error) {
+      console.error("Failed to start data collection:", error);
+      setIsAgentRunning(false);
+      setSnackbarMessage("Failed to start data collection. Please try again.");
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  };
+  
+  // Function to poll job status
+  const pollJobStatus = async (jobId: string) => {
+    try {
+      const result = await preDisasterService.getJobStatus(jobId);
+      
+      // Update progress
+      setAgentProgress(result.progress);
+      
+      // Use our service's progress calculation for structured progress updates
+      const progressByCategory = preDisasterService.calculateStructureProgress(result.status, result.progress);
+      setCollectionStatus(progressByCategory);
+      
+      // Check if job is completed or errored
+      if (result.status === "completed") {
+        // Convert OSM data to PreDisasterLocation format
+        const locations = preDisasterService.convertOSMToLocationData(result.result);
         
-        // Update category progress randomly
-        setCollectionStatus(prev => ({
-          hospitals: Math.min(100, prev.hospitals + Math.random() * 10),
-          schools: Math.min(100, prev.schools + Math.random() * 8),
-          infrastructure: Math.min(100, prev.infrastructure + Math.random() * 6),
-          shelters: Math.min(100, prev.shelters + Math.random() * 7),
-          waterSources: Math.min(100, prev.waterSources + Math.random() * 9)
-        }));
-      }, 300);
-    };
-    
-    simulateCollection();
+        console.log("Collected locations:", locations);
+        
+        // Ensure locations is always an array
+        setCollectedLocations(Array.isArray(locations) ? locations : []);
+        setIsAgentRunning(false);
+        
+        // Only show dialog if we have data
+        if (locations && locations.length > 0) {
+          setShowResultsDialog(true);
+        } else {
+          // Show a message that no data was found
+          setSnackbarMessage(`No locations found for "${locationQuery}". Try a different search term.`);
+          setSnackbarSeverity('warning');
+          setSnackbarOpen(true);
+        }
+      } else if (result.status === "error") {
+        setIsAgentRunning(false);
+        setSnackbarMessage(`Error collecting data: ${result.error || "Unknown error"}`);
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      } else {
+        // Continue polling with exponential backoff
+        const waitTime = result.status === "collecting_boundary" ? 2000 : 1000;
+        setTimeout(() => pollJobStatus(jobId), waitTime);
+      }
+    } catch (error) {
+      console.error("Error polling job status:", error);
+      setIsAgentRunning(false);
+      setSnackbarMessage("Failed to check data collection status. Please try again.");
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
   };
   
   // Import all existing locations to the main database
@@ -316,7 +376,9 @@ export default function PreDisasterPage() {
     setHasSearchedBefore(true);
     
     // Show success message
-    alert(`Successfully imported ${collectedLocations.length} locations for "${locationQuery}"`);
+    setSnackbarMessage(`Successfully imported ${collectedLocations.length} locations for "${locationQuery}"`);
+    setSnackbarSeverity('success');
+    setSnackbarOpen(true);
   };
   
   // Get the filtered and sorted database locations
@@ -353,7 +415,7 @@ export default function PreDisasterPage() {
       <Paper sx={{ p: 3, mb: 3 }}>
         <Typography variant="h6" gutterBottom>Search Location</Typography>
         <Typography variant="body2" color="text.secondary" paragraph>
-          Enter a location to automatically collect baseline community data from public sources
+          Enter a location to automatically collect baseline community data from OpenStreetMap
         </Typography>
         
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
@@ -524,7 +586,7 @@ export default function PreDisasterPage() {
                   anchorEl={filterMenuAnchor}
                   onClose={handleFilterClose}
                 >
-                  {['hospital', 'school', 'infrastructure', 'shelter', 'waterSource'].map((type) => (
+                  {['hospital', 'school', 'infrastructure', 'shelter', 'water', 'power', 'fire_station', 'police'].map((type) => (
                     <MenuItem 
                       key={type} 
                       onClick={() => handleFilterSelect(type)}
@@ -533,7 +595,7 @@ export default function PreDisasterPage() {
                         textTransform: 'capitalize'
                       }}
                     >
-                      {type}
+                      {type.replace('_', ' ')}
                     </MenuItem>
                   ))}
                 </Menu>
@@ -570,7 +632,7 @@ export default function PreDisasterPage() {
                         <TableCell>{location.name}</TableCell>
                         <TableCell>
                           <Chip 
-                            label={location.type} 
+                            label={location.type.replace('_', ' ')} 
                             size="small"
                             sx={{ textTransform: 'capitalize' }}
                           />
@@ -696,7 +758,7 @@ export default function PreDisasterPage() {
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" paragraph>
-            The AI agent has identified {collectedLocations.length} locations for "{locationQuery}". 
+            The data collection agent has identified {collectedLocations.length} locations for "{locationQuery}". 
             Review the findings below before adding to your database.
           </Typography>
           
@@ -708,7 +770,6 @@ export default function PreDisasterPage() {
                   <TableCell>Name</TableCell>
                   <TableCell>Type</TableCell>
                   <TableCell>Coordinates</TableCell>
-                  <TableCell>Occupancy</TableCell>
                   <TableCell>Details</TableCell>
                 </TableRow>
               </TableHead>
@@ -723,7 +784,7 @@ export default function PreDisasterPage() {
                     <TableCell>{location.name}</TableCell>
                     <TableCell>
                       <Chip 
-                        label={location.type} 
+                        label={location.type.replace('_', ' ')} 
                         size="small"
                         sx={{ textTransform: 'capitalize' }}
                       />
@@ -731,10 +792,18 @@ export default function PreDisasterPage() {
                     <TableCell>
                       {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
                     </TableCell>
-                    <TableCell>{location.occupancy || 'N/A'}</TableCell>
                     <TableCell>{location.details}</TableCell>
                   </TableRow>
                 ))}
+                {collectedLocations.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No locations were found for this search.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -746,11 +815,21 @@ export default function PreDisasterPage() {
           <Button 
             variant="contained" 
             onClick={handleImportAllLocations}
+            disabled={collectedLocations.length === 0}
           >
             Import All Locations
           </Button>
         </DialogActions>
       </Dialog>
+      
+      {/* Snackbar for feedback */}
+      <Snackbar 
+        open={snackbarOpen} 
+        autoHideDuration={6000} 
+        onClose={handleSnackbarClose}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
     </Box>
   );
 }

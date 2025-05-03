@@ -1,0 +1,24 @@
+{
+  "location": "Alappuzha",
+  "timestamp": "2025-05-03T16:37:24.811260",
+  "poi_data": {
+    "hospital": [],
+    "school": [],
+    "shelter": [],
+    "fire_station": [],
+    "police": [],
+    "water": [],
+    "power": []
+  },
+  "boundary_info": {
+    "name": "Alappuzha",
+    "file_path": "data/boundaries/alappuzha_boundary.geojson",
+    "area_sqkm": 0.0,
+    "bbox": [
+      76.2794604,
+      9.1101406,
+      76.6911251,
+      9.8910134
+    ]
+  }
+}

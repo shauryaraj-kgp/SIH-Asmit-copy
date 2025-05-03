@@ -7,8 +7,12 @@ import sys
 import json
 from datetime import datetime
 
-# Import the bravo module
+# Import the bravo module and osm_service
 from app.services import bravo
+from app.services.osm_service import OSMService
+
+# Initialize OSM service
+osm_service = OSMService()
 
 app = FastAPI()
 
@@ -31,10 +35,37 @@ class DiscoveryRequest(BaseModel):
 class ReportRequest(BaseModel):
     discovery_file: Optional[str] = None
     query: Optional[str] = None
+    
+class LocationRequest(BaseModel):
+    location: str
+    structures: Optional[List[str]] = None
 
 @app.get("/")
 async def root():
     return {"message": "DisasterLens AI API"}
+
+@app.post("/api/pre-disaster/collect")
+async def collect_location_data(request: LocationRequest, background_tasks: BackgroundTasks):
+    """Collect pre-disaster data for a location using OpenStreetMap"""
+    job_id = f"predisaster_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    
+    # Default structures if not provided
+    if not request.structures:
+        request.structures = ["hospital", "school", "shelter", "fire_station", "police", "water", "power"]
+    
+    active_jobs[job_id] = {
+        "status": "collecting",
+        "location": request.location,
+        "structures": request.structures,
+        "progress": 0,
+        "result": None,
+        "error": None
+    }
+    
+    # Run collection in background
+    background_tasks.add_task(run_location_data_collection, job_id, request.location, request.structures)
+    
+    return {"job_id": job_id}
 
 @app.post("/api/discover")
 async def discover_disaster_data(request: DiscoveryRequest, background_tasks: BackgroundTasks):
@@ -220,22 +251,103 @@ async def run_report_generation(job_id: str, discovery_file: Optional[str], quer
             # First run discovery with the query
             active_jobs[job_id]["status"] = "discovering"
             discovery_job_id = f"discovery_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            await run_discovery("temp_" + discovery_job_id, query)
+            temp_discovery_id = f"temp_{discovery_job_id}"
             
-            if active_jobs["temp_" + discovery_job_id]["status"] != "completed":
-                raise Exception(f"Discovery failed: {active_jobs['temp_' + discovery_job_id].get('error', 'Unknown error')}")
+            # Initialize the temp discovery job in active_jobs
+            active_jobs[temp_discovery_id] = {
+                "status": "discovering",
+                "query": query,
+                "progress": 0,
+                "result": None,
+                "error": None
+            }
             
-            file_path = f"disaster_data/{active_jobs['temp_' + discovery_job_id]['result']}"
+            # Run the discovery
+            await run_discovery(temp_discovery_id, query)
+            
+            if temp_discovery_id not in active_jobs:
+                raise Exception(f"Internal error: discovery job {temp_discovery_id} not found")
+                
+            if active_jobs[temp_discovery_id]["status"] != "completed":
+                raise Exception(f"Discovery failed: {active_jobs[temp_discovery_id].get('error', 'Unknown error')}")
+            
+            file_path = f"disaster_data/{active_jobs[temp_discovery_id]['result']}"
+            if not os.path.exists(file_path):
+                raise Exception(f"Discovery file not found: {file_path}")
+                
             active_jobs[job_id]["progress"] = 40
         
         # Generate report using bravo's manual_pipeline
         active_jobs[job_id]["status"] = "processing"
+        print(f"Generating report from file: {file_path}")
         report = bravo.manual_pipeline(file_path)
         
-        # Update job status
+        print(f"Report generation complete. Content length: {len(report) if report else 0}")
+        print(f"Report starts with: {report[:100] if report else 'No content'}")
+        
+        # Ensure the report is a string with actual content
+        if not report or not isinstance(report, str) or len(report) < 10:
+            # If the report is empty or not a string, create a simple report
+            report = f"""# Error in Report Generation
+            
+We encountered an issue generating the full report. 
+
+Please try again with a different query or check the system logs.
+
+Query: {query}
+Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            """
+            print("Generated fallback report due to empty or invalid report content")
+        
+        # Update job status with the report content
         active_jobs[job_id]["status"] = "completed"
         active_jobs[job_id]["result"] = report
         active_jobs[job_id]["progress"] = 100
+        print(f"Job {job_id} completed successfully with report content")
+    except Exception as e:
+        print(f"Error generating report: {str(e)}")
+        active_jobs[job_id]["status"] = "error"
+        active_jobs[job_id]["error"] = str(e)
+
+# New background task for pre-disaster data collection
+async def run_location_data_collection(job_id: str, location: str, structures: List[str]):
+    """Run pre-disaster data collection in background"""
+    try:
+        # Update progress
+        active_jobs[job_id]["progress"] = 10
+        
+        # Collect POI data
+        active_jobs[job_id]["status"] = "collecting_poi"
+        poi_data = osm_service.collect_poi_data(location, structures)
+        active_jobs[job_id]["progress"] = 60
+        
+        # Collect boundary data
+        active_jobs[job_id]["status"] = "collecting_boundary"
+        boundary_info = osm_service.collect_boundary_data(location)
+        active_jobs[job_id]["progress"] = 90
+        
+        # Compile results
+        results = {
+            "location": location,
+            "timestamp": datetime.now().isoformat(),
+            "poi_data": poi_data,
+            "boundary_info": boundary_info
+        }
+        
+        # Save results to file
+        os.makedirs("data/pre_disaster", exist_ok=True)
+        filename = f"predisaster_{location.replace(' ', '_').lower()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        file_path = f"data/pre_disaster/{filename}"
+        
+        with open(file_path, "w") as f:
+            json.dump(results, f, indent=2)
+        
+        # Update job status
+        active_jobs[job_id]["status"] = "completed"
+        active_jobs[job_id]["result"] = results
+        active_jobs[job_id]["file_path"] = file_path
+        active_jobs[job_id]["progress"] = 100
+        
     except Exception as e:
         active_jobs[job_id]["status"] = "error"
         active_jobs[job_id]["error"] = str(e)

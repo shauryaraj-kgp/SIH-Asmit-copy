@@ -1,0 +1,24 @@
+{
+  "location": "india",
+  "timestamp": "2025-05-03T17:01:36.976632",
+  "poi_data": {
+    "hospital": [],
+    "school": [],
+    "shelter": [],
+    "fire_station": [],
+    "police": [],
+    "water": [],
+    "power": []
+  },
+  "boundary_info": {
+    "name": "india",
+    "file_path": "data/boundaries/india_boundary.geojson",
+    "area_sqkm": 3487573.81,
+    "bbox": [
+      67.9544415,
+      6.5531169,
+      97.395561,
+      35.6745457
+    ]
+  }
+}

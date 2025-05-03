@@ -1,0 +1,14 @@
+{
+  "location": "Alappuzha",
+  "timestamp": "2025-05-03T16:53:45.926239",
+  "poi_data": {
+    "hospital": [],
+    "school": [],
+    "shelter": [],
+    "fire_station": [],
+    "police": [],
+    "water": [],
+    "power": []
+  },
+  "boundary_info": null
+}

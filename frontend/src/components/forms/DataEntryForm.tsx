@@ -2,12 +2,15 @@ import { useState, ChangeEvent, FormEvent } from 'react';
 import {
   Box, Paper, Typography, TextField, Button,
   MenuItem, FormControl, InputLabel, Select, SelectChangeEvent,
-  FormControlLabel, Switch, Divider, Snackbar, Alert
+  FormControlLabel, Switch, Divider, Snackbar, Alert,
+  CircularProgress
 } from '@mui/material';
 import { PhotoCamera, Send, Save } from '@mui/icons-material';
+import { postDisasterService, PostDisasterUpdate } from '../../services/postDisasterService';
 
 interface DataEntryFormProps {
   formType?: 'pre-disaster' | 'post-disaster';
+  onSubmitSuccess?: (data: any) => void;
 }
 
 interface FormValues {
@@ -21,7 +24,7 @@ interface FormValues {
   verified: boolean;
 }
 
-export default function DataEntryForm({ formType = 'pre-disaster' }: DataEntryFormProps) {
+export default function DataEntryForm({ formType = 'pre-disaster', onSubmitSuccess }: DataEntryFormProps) {
   const [formValues, setFormValues] = useState<FormValues>({
     locationName: '',
     latitude: '',
@@ -36,8 +39,10 @@ export default function DataEntryForm({ formType = 'pre-disaster' }: DataEntryFo
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
-    severity: 'success' as const
+    severity: 'success' as 'success' | 'error' | 'warning' | 'info'
   });
+
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -60,29 +65,76 @@ export default function DataEntryForm({ formType = 'pre-disaster' }: DataEntryFo
     setFormValues(prev => ({ ...prev, [name]: checked }));
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // In a real app, this would send data to the backend
-    console.log('Submitting form data:', formValues);
-    
-    // Show success message
-    setSnackbar({
-      open: true,
-      message: 'Data successfully submitted!',
-      severity: 'success'
-    });
-    
-    // Clear form (in a real app you might want to keep some fields)
-    setFormValues({
-      locationName: '',
-      latitude: '',
-      longitude: '',
-      category: '',
-      details: '',
-      status: formType === 'post-disaster' ? 'operational' : '',
-      image: null,
-      verified: false
-    });
+    setSubmitting(true);
+
+    try {
+      if (formType === 'post-disaster') {
+        // Create a post-disaster update object
+        const update: PostDisasterUpdate = {
+          locationName: formValues.locationName,
+          type: formValues.category,
+          status: formValues.status as 'operational' | 'damaged' | 'destroyed' | 'unknown',
+          latitude: parseFloat(formValues.latitude),
+          longitude: parseFloat(formValues.longitude),
+          details: formValues.details,
+          reportedBy: 'web_user', // In a real app, get from user profile
+          reportedAt: new Date().toISOString(),
+          source: 'field', // Manual entry is field data
+          hasImage: formValues.image !== null,
+          verified: formValues.verified
+        };
+
+        // Store in RAG database
+        const result = await postDisasterService.storePostDisasterUpdate(update);
+        
+        // Show success message
+        setSnackbar({
+          open: true,
+          message: 'Post-disaster update successfully submitted and stored in database!',
+          severity: 'success'
+        });
+        
+        // Call the success callback if provided
+        if (onSubmitSuccess) {
+          onSubmitSuccess(result);
+        }
+      } else {
+        // Pre-disaster logic (to be implemented separately)
+        console.log('Submitting pre-disaster form data:', formValues);
+        
+        // Show success message
+        setSnackbar({
+          open: true,
+          message: 'Pre-disaster data successfully submitted!',
+          severity: 'success'
+        });
+      }
+      
+      // Clear form
+      setFormValues({
+        locationName: '',
+        latitude: '',
+        longitude: '',
+        category: '',
+        details: '',
+        status: formType === 'post-disaster' ? 'operational' : '',
+        image: null,
+        verified: false
+      });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      
+      // Show error message
+      setSnackbar({
+        open: true,
+        message: `Error submitting data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        severity: 'error'
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleCloseSnackbar = () => {
@@ -107,6 +159,7 @@ export default function DataEntryForm({ formType = 'pre-disaster' }: DataEntryFo
               name="locationName"
               value={formValues.locationName}
               onChange={handleChange}
+              disabled={submitting}
             />
           </Box>
           
@@ -121,6 +174,7 @@ export default function DataEntryForm({ formType = 'pre-disaster' }: DataEntryFo
               inputProps={{ step: 'any' }}
               value={formValues.latitude}
               onChange={handleChange}
+              disabled={submitting}
             />
           </Box>
           
@@ -135,12 +189,13 @@ export default function DataEntryForm({ formType = 'pre-disaster' }: DataEntryFo
               inputProps={{ step: 'any' }}
               value={formValues.longitude}
               onChange={handleChange}
+              disabled={submitting}
             />
           </Box>
           
           {/* Category */}
           <Box sx={{ flexBasis: { xs: '100%', sm: formType === 'post-disaster' ? '48%' : '100%' } }}>
-            <FormControl fullWidth required>
+            <FormControl fullWidth required disabled={submitting}>
               <InputLabel>Category</InputLabel>
               <Select
                 name="category"
@@ -160,7 +215,7 @@ export default function DataEntryForm({ formType = 'pre-disaster' }: DataEntryFo
           {/* Status (for post-disaster only) */}
           {formType === 'post-disaster' && (
             <Box sx={{ flexBasis: { xs: '100%', sm: '48%' } }}>
-              <FormControl fullWidth required>
+              <FormControl fullWidth required disabled={submitting}>
                 <InputLabel>Current Status</InputLabel>
                 <Select
                   name="status"
@@ -187,6 +242,7 @@ export default function DataEntryForm({ formType = 'pre-disaster' }: DataEntryFo
               rows={4}
               value={formValues.details}
               onChange={handleChange}
+              disabled={submitting}
             />
           </Box>
           
@@ -196,6 +252,7 @@ export default function DataEntryForm({ formType = 'pre-disaster' }: DataEntryFo
               variant="outlined"
               component="label"
               startIcon={<PhotoCamera />}
+              disabled={submitting}
             >
               Upload Photo
               <input
@@ -203,6 +260,7 @@ export default function DataEntryForm({ formType = 'pre-disaster' }: DataEntryFo
                 hidden
                 accept="image/*"
                 onChange={handleImageUpload}
+                disabled={submitting}
               />
             </Button>
             {formValues.image && (
@@ -221,6 +279,7 @@ export default function DataEntryForm({ formType = 'pre-disaster' }: DataEntryFo
                     name="verified"
                     checked={formValues.verified}
                     onChange={handleSwitchChange}
+                    disabled={submitting}
                   />
                 }
                 label="I verify this information is accurate and current"
@@ -235,15 +294,17 @@ export default function DataEntryForm({ formType = 'pre-disaster' }: DataEntryFo
               <Button
                 variant="outlined"
                 startIcon={<Save />}
+                disabled={submitting}
               >
                 Save Draft
               </Button>
               <Button
                 type="submit"
                 variant="contained"
-                startIcon={<Send />}
+                startIcon={submitting ? <CircularProgress size={24} color="inherit" /> : <Send />}
+                disabled={submitting}
               >
-                Submit
+                {submitting ? 'Submitting...' : 'Submit'}
               </Button>
             </Box>
           </Box>
