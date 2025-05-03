@@ -1,6 +1,23 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import Map, { Marker, Popup, NavigationControl, ViewStateChangeEvent } from '@vis.gl/react-maplibre';
-import { Box, Paper, Typography, Chip, ToggleButtonGroup, ToggleButton, CircularProgress } from '@mui/material';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import Map, { 
+  Marker, 
+  Popup, 
+  NavigationControl, 
+  ViewStateChangeEvent,
+  Source,
+  Layer
+} from '@vis.gl/react-maplibre';
+import { 
+  Box, 
+  Paper, 
+  Typography, 
+  Chip, 
+  ToggleButtonGroup, 
+  ToggleButton, 
+  CircularProgress, 
+  Switch,
+  FormControlLabel 
+} from '@mui/material';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 // Define types for our location data
@@ -117,6 +134,7 @@ export default function MapContainer({ searchQuery, onLocationSelect }: MapConta
   const [locations, setLocations] = useState<ExtendedLocation[]>(MOCK_LOCATIONS);
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [showHeatmap, setShowHeatmap] = useState(false);
   
   // Add ref to track previous search query to prevent oscillation
   const prevSearchQueryRef = useRef<string | undefined>(undefined);
@@ -314,6 +332,31 @@ export default function MapContainer({ searchQuery, onLocationSelect }: MapConta
     }
   };
 
+  // Prepare heatmap data - more weight for destroyed locations, less for operational
+  const heatmapData = useMemo(() => {
+    // Only show the heatmap in post-disaster mode
+    if (!showHeatmap || mapMode !== 'post') return { 
+      type: 'FeatureCollection' as const, 
+      features: [] 
+    };
+    
+    return {
+      type: 'FeatureCollection' as const,
+      features: locations.map(location => ({
+        type: 'Feature' as const,
+        properties: {
+          // Weight based on damage level: destroyed (1.0), damaged (0.6), operational (0.2)
+          intensity: location.status === 'destroyed' ? 1.0 : 
+                     location.status === 'damaged' ? 0.6 : 0.2
+        },
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [location.lng, location.lat]
+        }
+      }))
+    };
+  }, [locations, showHeatmap, mapMode]);
+
   return (
     <Paper elevation={3} sx={{ height: 'calc(100vh - 150px)', position: 'relative' }}>
       {/* Map Mode Toggle */}
@@ -343,6 +386,22 @@ export default function MapContainer({ searchQuery, onLocationSelect }: MapConta
           <ToggleButton value="shelter">Shelters</ToggleButton>
           <ToggleButton value="infrastructure">Infrastructure</ToggleButton>
         </ToggleButtonGroup>
+        
+        {mapMode === 'post' && (
+          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={showHeatmap}
+                  onChange={(e) => setShowHeatmap(e.target.checked)}
+                  size="small"
+                />
+              }
+              label={<Typography variant="caption">Heatmap</Typography>}
+              labelPlacement="start"
+            />
+          </Box>
+        )}
       </Box>
 
       {/* Loading indicator */}
@@ -415,6 +474,59 @@ export default function MapContainer({ searchQuery, onLocationSelect }: MapConta
         style={{ width: '100%', height: '100%' }}
       >
         <NavigationControl />
+        
+        {/* Heatmap layer for post-disaster damage visualization */}
+        {showHeatmap && mapMode === 'post' && (
+          <Source
+            id="damage-heatmap-source"
+            type="geojson"
+            data={heatmapData}
+          >
+            <Layer
+              id="damage-heatmap-layer"
+              type="heatmap"
+              paint={{
+                // Increase the heatmap weight based on intensity in our data
+                'heatmap-weight': ['get', 'intensity'],
+                // Increase the heatmap color weight by zoom level
+                'heatmap-intensity': [
+                  'interpolate',
+                  ['linear'],
+                  ['zoom'],
+                  0, 1,
+                  12, 3
+                ],
+                // Color ramp for heatmap from red to yellow to green
+                'heatmap-color': [
+                  'interpolate',
+                  ['linear'],
+                  ['heatmap-density'],
+                  0, 'rgba(0, 0, 255, 0)',
+                  0.2, 'rgba(0, 255, 0, 1)',
+                  0.4, 'rgba(255, 255, 0, 1)',
+                  0.6, 'rgba(255, 165, 0, 1)',
+                  0.8, 'rgba(255, 0, 0, 1)'
+                ],
+                // Radius expressed in pixels
+                'heatmap-radius': [
+                  'interpolate',
+                  ['linear'],
+                  ['zoom'],
+                  0, 10,
+                  12, 30
+                ],
+                // Opacity based on zoom level
+                'heatmap-opacity': [
+                  'interpolate',
+                  ['linear'],
+                  ['zoom'],
+                  7, 0.7,
+                  15, 0.5
+                ]
+              }}
+            />
+          </Source>
+        )}
         
         {locations
           .filter(loc => visibleLayers.includes(loc.type) || loc.type === 'location')

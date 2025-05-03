@@ -223,15 +223,22 @@ export default function MapPage() {
       setSearchHistory(prev => [location.name, ...prev].slice(0, 5));
     }
     
-    // Update the side panel to show this location's info
-    setCriticalLocations(prev => {
-      // If the location is already in our list, just update it
-      if (prev.some(loc => loc.id === location.id)) {
-        return prev.map(loc => loc.id === location.id ? location : loc);
-      }
-      // Otherwise add it to the top of our list
-      return [location, ...prev.slice(0, 4)]; // Keep list to 5 items
-    });
+    // Check if this is a new location without disaster data (from search)
+    if (location.type === 'location') {
+      // For locations from search that aren't part of our disaster database
+      setCriticalLocations([]);
+      setNotifications([]);
+    } else {
+      // Update the side panel to show this location's info
+      setCriticalLocations(prev => {
+        // If the location is already in our list, just update it
+        if (prev.some(loc => loc.id === location.id)) {
+          return prev.map(loc => loc.id === location.id ? location : loc);
+        }
+        // Otherwise add it to the top of our list
+        return [location, ...prev.slice(0, 4)]; // Keep list to 5 items
+      });
+    }
     
     // Confirm search completion to user
     if (searchExecuted) {
@@ -346,34 +353,6 @@ export default function MapPage() {
           </Button>
         </Box>
         
-        {/* Recent searches */}
-        {searchHistory.length > 0 && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-            <Typography variant="caption" color="text.secondary">
-              Recent:
-            </Typography>
-            {searchHistory.slice(0, 3).map((term) => (
-              <Chip
-                key={term}
-                label={term}
-                size="small"
-                onClick={() => {
-                  setSearchQuery(term);
-                  // Directly trigger search on chip click
-                  if (!searchInProgress) {
-                    setSearchExecuted(true);
-                    setSnackbarMessage(`Searching for "${term}"...`);
-                    setSnackbarOpen(true);
-                    setSearchInProgress(true);
-                  }
-                }}
-                disabled={searchInProgress}
-                sx={{ fontSize: '0.75rem' }}
-              />
-            ))}
-          </Box>
-        )}
-        
         <Box sx={{ display: 'flex', gap: 1 }}>
           <IconButton title="Refresh map data" onClick={handleRefreshMap} disabled={searchInProgress}>
             <Refresh />
@@ -447,159 +426,198 @@ export default function MapPage() {
 
           <TabPanel value={tabValue} index={0}>
             <Box sx={{ overflow: 'auto', height: '100%', maxHeight: { xs: '300px', md: 'calc(100vh - 300px)' } }}>
-              <List disablePadding>
-                {criticalLocations.map((location) => (
-                  <ListItem 
-                    key={location.id}
-                    divider
-                    component="button"
-                    onClick={() => setSelectedLocation(location.name)}
-                    sx={{ 
-                      bgcolor: selectedLocation === location.name ? 'action.selected' : 'inherit',
-                      '&:hover': {
-                        bgcolor: selectedLocation === location.name ? 'action.selected' : 'action.hover'
-                      }
-                    }}
-                  >
-                    <ListItemIcon>
-                      <LocationOn 
-                        sx={{ color: getStatusColor(location.status) }} 
-                      />
-                    </ListItemIcon>
-                    <ListItemText 
-                      primary={location.name}
-                      secondary={`Type: ${location.type}`}
-                      primaryTypographyProps={{
-                        fontWeight: location.priority === 'critical' ? 'bold' : 'regular'
+              {criticalLocations.length > 0 ? (
+                <List disablePadding>
+                  {criticalLocations.map((location) => (
+                    <ListItem 
+                      key={location.id}
+                      divider
+                      component="button"
+                      onClick={() => setSelectedLocation(location.name)}
+                      sx={{ 
+                        bgcolor: selectedLocation === location.name ? 'action.selected' : 'inherit',
+                        '&:hover': {
+                          bgcolor: selectedLocation === location.name ? 'action.selected' : 'action.hover'
+                        }
                       }}
-                    />
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-end' }}>
-                      <Chip 
-                        size="small" 
-                        label={location.status} 
-                        sx={{ 
-                          backgroundColor: getStatusColor(location.status),
-                          color: 'white',
-                          fontWeight: 'bold',
-                          minWidth: '90px',
-                          justifyContent: 'center'
-                        }} 
+                    >
+                      <ListItemIcon>
+                        <LocationOn 
+                          sx={{ color: getStatusColor(location.status) }} 
+                        />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={location.name}
+                        secondary={`Type: ${location.type}`}
+                        primaryTypographyProps={{
+                          fontWeight: location.priority === 'critical' ? 'bold' : 'regular'
+                        }}
                       />
-                      <Chip 
-                        size="small" 
-                        label={location.priority} 
-                        variant="outlined"
-                        sx={{ 
-                          borderColor: getPriorityColor(location.priority || 'medium'),
-                          color: getPriorityColor(location.priority || 'medium'),
-                          minWidth: '90px',
-                          justifyContent: 'center'
-                        }} 
-                      />
-                    </Box>
-                  </ListItem>
-                ))}
-              </List>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-end' }}>
+                        <Chip 
+                          size="small" 
+                          label={location.status} 
+                          sx={{ 
+                            backgroundColor: getStatusColor(location.status),
+                            color: 'white',
+                            fontWeight: 'bold',
+                            minWidth: '90px',
+                            justifyContent: 'center'
+                          }} 
+                        />
+                        {location.priority && (
+                          <Chip 
+                            size="small" 
+                            label={location.priority} 
+                            variant="outlined"
+                            sx={{ 
+                              borderColor: getPriorityColor(location.priority || 'medium'),
+                              color: getPriorityColor(location.priority || 'medium'),
+                              minWidth: '90px',
+                              justifyContent: 'center'
+                            }} 
+                          />
+                        )}
+                      </Box>
+                    </ListItem>
+                  ))}
+                </List>
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography variant="body1">
+                    No building information available for this location.
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    No disaster data has been recorded for this area.
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Real-time alerts and notifications appear here.
-            </Typography>
-            
-            {notifications.map((notification) => (
-              <Box 
-                key={notification.id}
-                sx={{ 
-                  mt: 2, 
-                  p: 2, 
-                  borderRadius: 1, 
-                  border: '1px solid',
-                  ...(notification.severity === 'error' 
-                    ? { bgcolor: '#ffebee', borderColor: '#ffcdd2' }
-                    : notification.severity === 'warning' 
-                      ? { bgcolor: '#fff3e0', borderColor: '#ffe0b2' }
-                      : { bgcolor: '#e3f2fd', borderColor: '#bbdefb' }
-                  )
-                }}
-              >
-                <Typography 
-                  variant="subtitle2" 
-                  sx={{ 
-                    color: notification.severity === 'error' 
-                      ? '#c62828' 
-                      : notification.severity === 'warning' 
-                        ? '#e65100' 
-                        : '#0277bd',
-                    fontWeight: 'bold' 
-                  }}
-                >
-                  {notification.title}
+            {searchQuery && searchExecuted && notifications.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="body1">
+                  No alerts available for this location.
                 </Typography>
-                <Typography variant="body2">
-                  {notification.message}
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
-                  Issued: {notification.timestamp.toLocaleString()}
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  There are currently no active alerts or warnings for this area.
                 </Typography>
               </Box>
-            ))}
+            ) : (
+              <>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  Real-time alerts and notifications appear here.
+                </Typography>
+                
+                {notifications.map((notification) => (
+                  <Box 
+                    key={notification.id}
+                    sx={{ 
+                      mt: 2, 
+                      p: 2, 
+                      borderRadius: 1, 
+                      border: '1px solid',
+                      ...(notification.severity === 'error' 
+                        ? { bgcolor: '#ffebee', borderColor: '#ffcdd2' }
+                        : notification.severity === 'warning' 
+                          ? { bgcolor: '#fff3e0', borderColor: '#ffe0b2' }
+                          : { bgcolor: '#e3f2fd', borderColor: '#bbdefb' }
+                      )
+                    }}
+                  >
+                    <Typography 
+                      variant="subtitle2" 
+                      sx={{ 
+                        color: notification.severity === 'error' 
+                          ? '#c62828' 
+                          : notification.severity === 'warning' 
+                            ? '#e65100' 
+                            : '#0277bd',
+                        fontWeight: 'bold' 
+                      }}
+                    >
+                      {notification.title}
+                    </Typography>
+                    <Typography variant="body2">
+                      {notification.message}
+                    </Typography>
+                    <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
+                      Issued: {notification.timestamp.toLocaleString()}
+                    </Typography>
+                  </Box>
+                ))}
+              </>
+            )}
           </TabPanel>
 
           <TabPanel value={tabValue} index={2}>
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              Current assessment statistics:
-            </Typography>
-            
-            <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                <Typography variant="body2">Buildings Assessed</Typography>
-                <Typography variant="body2" fontWeight="bold">1,248 / 2,370</Typography>
+            {searchQuery && searchExecuted && criticalLocations.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="body1">
+                  No statistics available for this location.
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  No assessment data has been collected for this area.
+                </Typography>
               </Box>
-              <Box sx={{ height: '8px', bgcolor: '#e0e0e0', borderRadius: '4px', overflow: 'hidden' }}>
-                <Box sx={{ height: '100%', bgcolor: '#1976d2', width: '53%' }} />
-              </Box>
-            </Box>
-            
-            <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                <Typography variant="body2">Critical Infrastructure</Typography>
-                <Typography variant="body2" fontWeight="bold">42 / 83</Typography>
-              </Box>
-              <Box sx={{ height: '8px', bgcolor: '#e0e0e0', borderRadius: '4px', overflow: 'hidden' }}>
-                <Box sx={{ height: '100%', bgcolor: '#1976d2', width: '51%' }} />
-              </Box>
-            </Box>
-            
-            <Divider sx={{ my: 2 }} />
-            
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2">Status Summary</Typography>
-              <Box sx={{ mt: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ height: '10px', width: '10px', borderRadius: '50%', bgcolor: '#4caf50', mr: 1 }} />
-                    <Typography variant="body2">Operational</Typography>
+            ) : (
+              <>
+                <Typography variant="body2" sx={{ mb: 2 }}>
+                  Current assessment statistics:
+                </Typography>
+                
+                <Box sx={{ mb: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="body2">Buildings Assessed</Typography>
+                    <Typography variant="body2" fontWeight="bold">1,248 / 2,370</Typography>
                   </Box>
-                  <Typography variant="body2">532</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ height: '10px', width: '10px', borderRadius: '50%', bgcolor: '#ff9800', mr: 1 }} />
-                    <Typography variant="body2">Damaged</Typography>
+                  <Box sx={{ height: '8px', bgcolor: '#e0e0e0', borderRadius: '4px', overflow: 'hidden' }}>
+                    <Box sx={{ height: '100%', bgcolor: '#1976d2', width: '53%' }} />
                   </Box>
-                  <Typography variant="body2">294</Typography>
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ height: '10px', width: '10px', borderRadius: '50%', bgcolor: '#f44336', mr: 1 }} />
-                    <Typography variant="body2">Destroyed</Typography>
+                
+                <Box sx={{ mb: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="body2">Critical Infrastructure</Typography>
+                    <Typography variant="body2" fontWeight="bold">42 / 83</Typography>
                   </Box>
-                  <Typography variant="body2">422</Typography>
+                  <Box sx={{ height: '8px', bgcolor: '#e0e0e0', borderRadius: '4px', overflow: 'hidden' }}>
+                    <Box sx={{ height: '100%', bgcolor: '#1976d2', width: '51%' }} />
+                  </Box>
                 </Box>
-              </Box>
-            </Box>
+                
+                <Divider sx={{ my: 2 }} />
+                
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2">Status Summary</Typography>
+                  <Box sx={{ mt: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Box sx={{ height: '10px', width: '10px', borderRadius: '50%', bgcolor: '#4caf50', mr: 1 }} />
+                        <Typography variant="body2">Operational</Typography>
+                      </Box>
+                      <Typography variant="body2">532</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Box sx={{ height: '10px', width: '10px', borderRadius: '50%', bgcolor: '#ff9800', mr: 1 }} />
+                        <Typography variant="body2">Damaged</Typography>
+                      </Box>
+                      <Typography variant="body2">294</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Box sx={{ height: '10px', width: '10px', borderRadius: '50%', bgcolor: '#f44336', mr: 1 }} />
+                        <Typography variant="body2">Destroyed</Typography>
+                      </Box>
+                      <Typography variant="body2">422</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </>
+            )}
           </TabPanel>
         </Paper>
       </Box>
