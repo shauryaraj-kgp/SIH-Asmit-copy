@@ -2,7 +2,7 @@
 
 DisasterLens AI (also known as Tri-Aid) is a comprehensive disaster response platform that bridges the critical information gap during the first 48 hours after a disaster occurs. The platform combines pre-disaster mapping, real-time post-disaster data collection, and advanced AI analysis to generate rapid, actionable disaster assessment reports.
 
-![DisasterLens AI Platform](https://via.placeholder.com/800x400?text=DisasterLens+AI+Platform)
+<!-- ![DisasterLens AI Platform](https://via.placeholder.com/800x400?text=DisasterLens+AI+Platform) -->
 
 ## What DisasterLens AI Solves
 
