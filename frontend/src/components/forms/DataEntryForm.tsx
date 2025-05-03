@@ -70,14 +70,41 @@ export default function DataEntryForm({ formType = 'pre-disaster', onSubmitSucce
     setSubmitting(true);
 
     try {
+      // First check if backend services are available
       if (formType === 'post-disaster') {
+        try {
+          const healthStatus = await postDisasterService.checkServicesHealth();
+          if (!healthStatus.allHealthy) {
+            throw new Error('Backend services are not fully available');
+          }
+        } catch (healthError) {
+          console.error('Backend health check failed:', healthError);
+          setSnackbar({
+            open: true,
+            message: 'Cannot connect to backend services. Please try again later.',
+            severity: 'error'
+          });
+          setSubmitting(false);
+          return;
+        }
+      }
+
+      if (formType === 'post-disaster') {
+        // Validate form data
+        const latitude = parseFloat(formValues.latitude);
+        const longitude = parseFloat(formValues.longitude);
+        
+        if (isNaN(latitude) || isNaN(longitude)) {
+          throw new Error('Latitude and longitude must be valid numbers');
+        }
+        
         // Create a post-disaster update object
         const update: PostDisasterUpdate = {
           locationName: formValues.locationName,
           type: formValues.category,
           status: formValues.status as 'operational' | 'damaged' | 'destroyed' | 'unknown',
-          latitude: parseFloat(formValues.latitude),
-          longitude: parseFloat(formValues.longitude),
+          latitude,
+          longitude,
           details: formValues.details,
           reportedBy: 'web_user', // In a real app, get from user profile
           reportedAt: new Date().toISOString(),

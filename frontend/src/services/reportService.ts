@@ -1,8 +1,12 @@
 import axios from 'axios';
 
-// Use both backend URLs
+// Use all three backend service URLs - each handles different aspects of reporting
+const RAG_API_URL = 'http://localhost:8000'; // RAG.py service
+const BRAVO_API_URL = 'http://localhost:8080'; // bravo-backend.py service
+const SOCIAL_API_URL = 'http://localhost:8081'; // social_agent_api.py service
+
+// Legacy API URL (kept for backward compatibility)
 const API_BASE_URL = 'http://localhost:8000/api';
-const BRAVO_API_URL = 'http://localhost:8080';
 
 interface JobStatus {
   status: 'discovering' | 'processing' | 'completed' | 'error';
@@ -149,11 +153,99 @@ export const reportService = {
   // Check health of backends
   checkHealth: async (): Promise<any> => {
     try {
-      const response = await axios.get(`${BRAVO_API_URL}/health`);
-      return response.data;
+      // Try to check all services
+      const services = {
+        rag: { available: false, status: null },
+        bravo: { available: false, status: null },
+        social: { available: false, status: null }
+      };
+      
+      // Use Promise.allSettled to check all services without failing if one is down
+      const results = await Promise.allSettled([
+        axios.get(`${RAG_API_URL}/health`),
+        axios.get(`${BRAVO_API_URL}/health`),
+        axios.get(`${SOCIAL_API_URL}/health`)
+      ]);
+      
+      // Process RAG service result
+      if (results[0].status === 'fulfilled') {
+        services.rag.available = true;
+        services.rag.status = results[0].value.data;
+      }
+      
+      // Process BRAVO service result
+      if (results[1].status === 'fulfilled') {
+        services.bravo.available = true;
+        services.bravo.status = results[1].value.data;
+      }
+      
+      // Process Social service result
+      if (results[2].status === 'fulfilled') {
+        services.social.available = true;
+        services.social.status = results[2].value.data;
+      }
+      
+      // Determine overall health
+      const allServicesUp = services.rag.available && services.bravo.available && services.social.available;
+      const someServicesUp = services.rag.available || services.bravo.available || services.social.available;
+      
+      return {
+        status: allServicesUp ? 'healthy' : (someServicesUp ? 'degraded' : 'down'),
+        services,
+        timestamp: new Date().toISOString()
+      };
     } catch (error) {
       console.error('Error checking backend health:', error);
-      return { status: 'error', message: error instanceof Error ? error.message : 'Unknown error' };
+      return { 
+        status: 'error', 
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      };
+    }
+  },
+  
+  // Retry mechanism for failed API calls
+  withRetry: async <T>(apiCall: () => Promise<T>, retries: number = 2): Promise<T> => {
+    let lastError;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        return await apiCall();
+      } catch (error) {
+        console.warn(`API call failed (attempt ${attempt + 1}/${retries + 1}):`, error);
+        lastError = error;
+        
+        if (attempt < retries) {
+          // Wait for an increasing amount of time before retrying
+          const delayMs = Math.pow(2, attempt) * 500; // 500ms, 1s, 2s
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+      }
+    }
+    throw lastError;
+  },
+  
+  // Generate a social media-focused report
+  generateSocialReport: async (query: DisasterQuery): Promise<ReportResponse> => {
+    try {
+      const response = await axios.post(`${SOCIAL_API_URL}/social_report`, query);
+      return response.data;
+    } catch (error) {
+      console.error('Error generating social report:', error);
+      throw error;
+    }
+  },
+  
+  // Generate a combined report from social media and news sources
+  generateCombinedReport: async (query: DisasterQuery): Promise<ReportResponse> => {
+    try {
+      const response = await axios.post(`${SOCIAL_API_URL}/combined_report`, query);
+      return response.data;
+    } catch (error) {
+      console.error('Error generating combined report:', error);
+      
+      // Fallback to regular report from RAG if social media report fails
+      console.log('Falling back to RAG-based report');
+      return reportService.generateReportFromRAG(query);
     }
   }
 };

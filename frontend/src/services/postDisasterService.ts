@@ -136,19 +136,26 @@ export const postDisasterService = {
   // Check RAG and Bravo API health
   checkServicesHealth: async () => {
     try {
-      const ragHealth = await axios.get(`${RAG_API_URL}/health`);
-      const bravoHealth = await axios.get(`${BRAVO_API_URL}/health`);
+      // Try to check all services with proper endpoints
+      const ragPromise = axios.get(`${RAG_API_URL}/health`);
+      const bravoPromise = axios.get(`${BRAVO_API_URL}/health`);
+      const socialPromise = axios.get(`${SOCIAL_API_URL}/health`);
+      
+      // Use Promise.allSettled to prevent one failure from blocking others
+      const results = await Promise.allSettled([ragPromise, bravoPromise, socialPromise]);
       
       return {
-        rag: ragHealth.data,
-        bravo: bravoHealth.data,
-        allHealthy: ragHealth.status === 200 && bravoHealth.status === 200
+        rag: results[0].status === 'fulfilled' ? results[0].value.data : { status: 'error' },
+        bravo: results[1].status === 'fulfilled' ? results[1].value.data : { status: 'error' },
+        social: results[2].status === 'fulfilled' ? results[2].value.data : { status: 'error' },
+        allHealthy: results.every(result => result.status === 'fulfilled')
       };
     } catch (error) {
       console.error('Error checking services health:', error);
       return {
         rag: { status: 'error' },
         bravo: { status: 'error' },
+        social: { status: 'error' },
         allHealthy: false,
         error: error
       };
