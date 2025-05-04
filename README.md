@@ -97,11 +97,7 @@ This project was developed by:
 - **Malyadip Pal**  
   [![GitHub](https://img.shields.io/badge/GitHub-%2312100E.svg?logo=github&logoColor=white)](https://github.com/Neural-Knight) [![LinkedIn](https://img.shields.io/badge/LinkedIn-%230A66C2.svg?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/malyadip-pal-bb034726a/)  
   Undergraduate Student, Department of Electrical Engineering, IIT Kharagpur
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](/LICENSE) file for details.
-
+  
 ## Acknowledgments
 
 This challenge was developed as part of the GLOBAL MIT AI HACKATHON 2025. Shreeansh Agawal, Linn Bieske, Andrea Jimenez, Kai Wiederhold, and Lisa Sklyarova organized this event and created this challenge in response to the growing need for better information management during disaster events.
