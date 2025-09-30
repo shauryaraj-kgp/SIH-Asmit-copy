@@ -402,7 +402,7 @@ export default function SocialFeed() {
         >
           <Tab label="All Posts" />
           <Tab label="Saved Posts" />
-          <Tab label="High Relevance" />
+          <Tab label="High Urgency" />
         </Tabs>
         
         <Alert severity="info" sx={{ mt: 2 }}>
@@ -462,9 +462,9 @@ export default function SocialFeed() {
                 action={
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Chip 
-                      label={`Relevance: ${Math.round(post.relevanceScore * 100)}%`}
+                      label={`Urgency: ${Math.round(post.relevanceScore * 100)}%`}
                       size="small"
-                      color={post.relevanceScore > 0.8 ? "success" : "default"}
+                      color={post.relevanceScore > 0.8 ? "error" : "default"}
                       sx={{ mr: 1 }}
                     />
                     <IconButton 

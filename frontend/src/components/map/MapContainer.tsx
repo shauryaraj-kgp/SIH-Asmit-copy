@@ -567,9 +567,9 @@ export default function MapContainer({ searchQuery, onLocationSelect }: MapConta
                   sx={{
                     width: 0,
                     height: 0,
-                    borderLeft: '10px solid transparent',
-                    borderRight: '10px solid transparent',
-                    borderBottom: `20px solid ${getStatusColor(location.status)}`,
+                    borderLeft: '8px solid transparent',
+                    borderRight: '8px solid transparent',
+                    borderBottom: `16px solid ${getStatusColor(location.status)}`,
                     filter: 'drop-shadow(0 0 0.5px rgba(0,0,0,0.3))',
                     cursor: 'pointer'
                   }}
@@ -586,7 +586,7 @@ export default function MapContainer({ searchQuery, onLocationSelect }: MapConta
                     width: 20, 
                     height: 20, 
                     borderRadius: '50%', 
-                    backgroundColor: getStatusColor(location.status),
+                    backgroundColor: '#f44336',
                     border: '2px solid white',
                     cursor: 'pointer',
                     boxShadow: '0 0 2px rgba(0,0,0,0.3)'

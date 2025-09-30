@@ -129,7 +129,7 @@ export default function PostDisasterPage() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'info' | 'warning'>('info');
   
-  // Load post-disaster updates when the component mounts and when tab changes to Shared Feed
+  // Load post-disaster updates when the component mounts and when tab changes to Recent Updates
   useEffect(() => {
     if (tabValue === 1) {
       fetchPostDisasterUpdates();
@@ -235,7 +235,7 @@ export default function PostDisasterPage() {
     setSnackbarSeverity('success');
     setSnackbarOpen(true);
     
-    // Refresh the data in the shared feed
+    // Refresh the data in the Recent Updates
     if (result && result.update) {
       // Either fetch all updates again or just add the new one to the existing array
       setUpdates(prevUpdates => [
@@ -247,7 +247,7 @@ export default function PostDisasterPage() {
       ]);
     }
     
-    // Switch to the Shared Feed tab
+    // Switch to the Recent Updates tab
     setTabValue(1);
   };
 
@@ -367,7 +367,7 @@ export default function PostDisasterPage() {
           aria-label="post-disaster data tabs"
         >
           <Tab label="Data Entry" />
-          <Tab label="Shared Feed" />
+          <Tab label="Recent Updates" />
           <Tab label="Social Media Monitor" />
         </Tabs>
       </Box>
