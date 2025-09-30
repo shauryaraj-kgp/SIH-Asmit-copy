@@ -36,6 +36,8 @@ interface ExtendedLocation extends Location {
   postDisasterStatus: 'operational' | 'damaged' | 'destroyed';
   damageDetails?: string;
   lastUpdated?: string;
+  // Source type for visualization: Type 1 (social media) vs Type 2 (formula)
+  sourceType?: 'type1' | 'type2';
 }
 
 // Correct interface for Nominatim API response
@@ -65,7 +67,8 @@ const MOCK_LOCATIONS: ExtendedLocation[] = [
     preDisasterStatus: 'operational',
     postDisasterStatus: 'damaged',
     damageDetails: 'Facade cracks and water ingress reported; ER operational with limited capacity.',
-    lastUpdated: '2025-05-02T08:45:00Z'
+    lastUpdated: '2025-05-02T08:45:00Z',
+    sourceType: 'type1'
   },
   {
     id: 2,
@@ -77,7 +80,8 @@ const MOCK_LOCATIONS: ExtendedLocation[] = [
     preDisasterStatus: 'operational',
     postDisasterStatus: 'damaged',
     damageDetails: 'Roof damage in assembly hall; classes suspended pending structural inspection.',
-    lastUpdated: '2025-05-01T15:20:00Z'
+    lastUpdated: '2025-05-01T15:20:00Z',
+    sourceType: 'type1'
   },
   {
     id: 3,
@@ -89,7 +93,8 @@ const MOCK_LOCATIONS: ExtendedLocation[] = [
     preDisasterStatus: 'operational',
     postDisasterStatus: 'destroyed',
     damageDetails: 'Severe deck damage with multiple spans compromised; closed for traffic.',
-    lastUpdated: '2025-05-01T12:35:00Z'
+    lastUpdated: '2025-05-01T12:35:00Z',
+    sourceType: 'type2'
   },
   {
     id: 6,
@@ -101,7 +106,8 @@ const MOCK_LOCATIONS: ExtendedLocation[] = [
     preDisasterStatus: 'operational',
     postDisasterStatus: 'damaged',
     damageDetails: 'Partial deck displacement and railing damage; restricted access in effect.',
-    lastUpdated: '2025-05-02T11:10:00Z'
+    lastUpdated: '2025-05-02T11:10:00Z',
+    sourceType: 'type2'
   },
   {
     id: 4,
@@ -113,7 +119,8 @@ const MOCK_LOCATIONS: ExtendedLocation[] = [
     preDisasterStatus: 'operational',
     postDisasterStatus: 'operational',
     damageDetails: 'Shelter active with ~200 occupants; supplies adequate for 36 hours.',
-    lastUpdated: '2025-05-02T10:15:00Z'
+    lastUpdated: '2025-05-02T10:15:00Z',
+    sourceType: 'type1'
   },
   {
     id: 5,
@@ -125,7 +132,8 @@ const MOCK_LOCATIONS: ExtendedLocation[] = [
     preDisasterStatus: 'operational',
     postDisasterStatus: 'damaged',
     damageDetails: 'Reduced output due to pump failures; water quality monitoring in progress.',
-    lastUpdated: '2025-05-02T14:30:00Z'
+    lastUpdated: '2025-05-02T14:30:00Z',
+    sourceType: 'type2'
   }
 ];
 
@@ -549,21 +557,43 @@ export default function MapContainer({ searchQuery, onLocationSelect }: MapConta
               latitude={location.lat}
               longitude={location.lng}
             >
-              <Box 
-                onClick={(e) => {
-                  // Prevent the click event from propagating to the map
-                  e.stopPropagation();
-                  handleMarkerClick(location);
-                }}
-                sx={{ 
-                  width: 20, 
-                  height: 20, 
-                  borderRadius: '50%', 
-                  backgroundColor: getStatusColor(location.status),
-                  border: '2px solid white',
-                  cursor: 'pointer'
-                }} 
-              />
+              {location.sourceType === 'type2' ? (
+                // Triangle marker for Type 2
+                <Box
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMarkerClick(location);
+                  }}
+                  sx={{
+                    width: 0,
+                    height: 0,
+                    borderLeft: '10px solid transparent',
+                    borderRight: '10px solid transparent',
+                    borderBottom: `20px solid ${getStatusColor(location.status)}`,
+                    filter: 'drop-shadow(0 0 0.5px rgba(0,0,0,0.3))',
+                    cursor: 'pointer'
+                  }}
+                  title={`Type 2: ${location.name}`}
+                />
+              ) : (
+                // Circle marker for Type 1 (default)
+                <Box 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMarkerClick(location);
+                  }}
+                  sx={{ 
+                    width: 20, 
+                    height: 20, 
+                    borderRadius: '50%', 
+                    backgroundColor: getStatusColor(location.status),
+                    border: '2px solid white',
+                    cursor: 'pointer',
+                    boxShadow: '0 0 2px rgba(0,0,0,0.3)'
+                  }} 
+                  title={`Type 1: ${location.name}`}
+                />
+              )}
             </Marker>
           ))
         }

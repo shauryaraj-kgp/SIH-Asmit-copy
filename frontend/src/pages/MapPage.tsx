@@ -46,6 +46,7 @@ interface ExtendedLocation {
   lastUpdated?: string;
   priority?: 'critical' | 'high' | 'medium' | 'low';
   verifiedCount?: number;
+  sourceType?: 'type1' | 'type2';
 }
 
 export default function MapPage() {
@@ -94,7 +95,8 @@ export default function MapPage() {
       postDisasterStatus: 'damaged',
       priority: 'high',
       damageDetails: 'Facade cracks and water ingress reported; ER operational with limited capacity.',
-      verifiedCount: 7
+      verifiedCount: 7,
+      sourceType: 'type1'
     },
     {
       id: 2,
@@ -107,7 +109,8 @@ export default function MapPage() {
       postDisasterStatus: 'damaged',
       priority: 'medium',
       damageDetails: 'Roof damage in assembly hall; classes suspended pending structural inspection.',
-      verifiedCount: 3
+      verifiedCount: 3,
+      sourceType: 'type1'
     },
     {
       id: 3,
@@ -120,7 +123,8 @@ export default function MapPage() {
       postDisasterStatus: 'destroyed',
       priority: 'critical',
       damageDetails: 'Severe deck damage with multiple spans compromised; closed for traffic.',
-      verifiedCount: 12
+      verifiedCount: 12,
+      sourceType: 'type2'
     },
     {
       id: 6,
@@ -133,7 +137,8 @@ export default function MapPage() {
       postDisasterStatus: 'damaged',
       priority: 'high',
       damageDetails: 'Partial deck displacement and railing damage; restricted access in effect.',
-      verifiedCount: 5
+      verifiedCount: 5,
+      sourceType: 'type2'
     },
     {
       id: 4,
@@ -146,7 +151,8 @@ export default function MapPage() {
       postDisasterStatus: 'operational',
       priority: 'high',
       damageDetails: 'Shelter active with ~200 occupants; supplies adequate for 36 hours.',
-      verifiedCount: 4
+      verifiedCount: 4,
+      sourceType: 'type1'
     },
     {
       id: 5,
@@ -159,7 +165,8 @@ export default function MapPage() {
       postDisasterStatus: 'damaged',
       priority: 'critical',
       damageDetails: 'Reduced output due to pump failures; water quality monitoring in progress.',
-      verifiedCount: 9
+      verifiedCount: 9,
+      sourceType: 'type2'
     }
   ]);
 
@@ -470,14 +477,18 @@ export default function MapPage() {
                       </ListItemIcon>
                       <ListItemText 
                         primary={location.name}
-                        secondary={`Type: ${location.type}`}
+                        secondary={location.sourceType ? (location.sourceType === 'type1' ? 'Type 1' : 'Type 2') : undefined}
+                        secondaryTypographyProps={{
+                          color: 'text.secondary',
+                          fontWeight: 'medium'
+                        }}
                         primaryTypographyProps={{
                           fontWeight: location.priority === 'critical' ? 'bold' : 'regular'
                         }}
                       />
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-end' }}>
                         <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                          {(location.verifiedCount ?? 0).toString()}
+                          Verified: {(location.verifiedCount ?? 0).toString()}
                         </Typography>
                         <Chip 
                           size="small" 
