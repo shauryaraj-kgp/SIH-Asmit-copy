@@ -53,66 +53,78 @@ interface NominatimResponse {
   importance: number;
 }
 
-// Mock data for points of interest with pre/post disaster status
+// Mock data for points of interest with pre/post disaster status (Mumbai coastline context)
 const MOCK_LOCATIONS: ExtendedLocation[] = [
-  { 
-    id: 1, 
-    name: 'Central Hospital', 
-    lat: 40.712, 
-    lng: -74.006, 
-    type: 'hospital', 
+  {
+    id: 1,
+    name: 'Colaba General Hospital',
+    lat: 18.907,
+    lng: 72.814,
+    type: 'hospital',
     status: 'operational',
     preDisasterStatus: 'operational',
     postDisasterStatus: 'damaged',
-    damageDetails: 'Structural damage to east wing, operating at 60% capacity. Emergency room still functional.',
+    damageDetails: 'Facade cracks and water ingress reported; ER operational with limited capacity.',
     lastUpdated: '2025-05-02T08:45:00Z'
   },
-  { 
-    id: 2, 
-    name: 'North School', 
-    lat: 40.718, 
-    lng: -74.012, 
-    type: 'school', 
+  {
+    id: 2,
+    name: 'Navy Nagar Public School',
+    lat: 18.905,
+    lng: 72.812,
+    type: 'school',
     status: 'damaged',
     preDisasterStatus: 'operational',
     postDisasterStatus: 'damaged',
-    damageDetails: 'Roof collapsed in gymnasium. Main building appears intact but needs assessment.',
+    damageDetails: 'Roof damage in assembly hall; classes suspended pending structural inspection.',
     lastUpdated: '2025-05-01T15:20:00Z'
   },
-  { 
-    id: 3, 
-    name: 'Main Bridge', 
-    lat: 40.710, 
-    lng: -74.002, 
-    type: 'infrastructure', 
+  {
+    id: 3,
+    name: 'Sassoon Dock Jetty',
+    lat: 18.915,
+    lng: 72.823,
+    type: 'bridge',
     status: 'destroyed',
     preDisasterStatus: 'operational',
     postDisasterStatus: 'destroyed',
-    damageDetails: 'Complete structural failure. Bridge has collapsed and is impassable.',
+    damageDetails: 'Severe deck damage with multiple spans compromised; closed for traffic.',
     lastUpdated: '2025-05-01T12:35:00Z'
   },
-  { 
-    id: 4, 
-    name: 'Emergency Shelter', 
-    lat: 40.715, 
-    lng: -74.008, 
-    type: 'shelter', 
-    status: 'operational',
-    preDisasterStatus: 'operational',
-    postDisasterStatus: 'operational',
-    damageDetails: 'Functioning as emergency shelter. Currently housing 87 people. Supplies adequate for 48 hours.',
-    lastUpdated: '2025-05-02T10:15:00Z'
-  },
   {
-    id: 5, 
-    name: 'City Power Substation Alpha', 
-    lat: 40.709, 
-    lng: -74.015, 
-    type: 'infrastructure', 
+    id: 6,
+    name: 'Colaba Jetty Bridge',
+    lat: 18.914,
+    lng: 72.826,
+    type: 'bridge',
     status: 'damaged',
     preDisasterStatus: 'operational',
     postDisasterStatus: 'damaged',
-    damageDetails: 'Operating at 40% capacity. Repairs underway, estimated 72 hours to full restoration.',
+    damageDetails: 'Partial deck displacement and railing damage; restricted access in effect.',
+    lastUpdated: '2025-05-02T11:10:00Z'
+  },
+  {
+    id: 4,
+    name: 'Gateway Relief Shelter',
+    lat: 18.922,
+    lng: 72.834,
+    type: 'shelter',
+    status: 'operational',
+    preDisasterStatus: 'operational',
+    postDisasterStatus: 'operational',
+    damageDetails: 'Shelter active with ~200 occupants; supplies adequate for 36 hours.',
+    lastUpdated: '2025-05-02T10:15:00Z'
+  },
+  {
+    id: 5,
+    name: 'Colaba Substation',
+    lat: 18.911,
+    lng: 72.819,
+    type: 'infrastructure',
+    status: 'damaged',
+    preDisasterStatus: 'operational',
+    postDisasterStatus: 'damaged',
+    damageDetails: 'Reduced output due to pump failures; water quality monitoring in progress.',
     lastUpdated: '2025-05-02T14:30:00Z'
   }
 ];
@@ -124,13 +136,13 @@ interface MapContainerProps {
 
 export default function MapContainer({ searchQuery, onLocationSelect }: MapContainerProps) {
   const [viewState, setViewState] = useState({
-    latitude: 40.712,
-    longitude: -74.006,
-    zoom: 12
+    latitude: 18.915,
+    longitude: 72.823,
+    zoom: 13
   });
   const [selectedLocation, setSelectedLocation] = useState<ExtendedLocation | null>(null);
   const [mapMode, setMapMode] = useState<'pre' | 'post'>('pre'); // 'pre' or 'post' disaster view
-  const [visibleLayers, setVisibleLayers] = useState<string[]>(['hospital', 'school', 'shelter', 'infrastructure']);
+  const [visibleLayers, setVisibleLayers] = useState<string[]>(['hospital', 'school', 'shelter', 'infrastructure', 'bridge']);
   const [locations, setLocations] = useState<ExtendedLocation[]>(MOCK_LOCATIONS);
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -290,7 +302,7 @@ export default function MapContainer({ searchQuery, onLocationSelect }: MapConta
   }, [searchQuery, handleSearch]);
 
   const handleLayerToggle = (
-    event: React.MouseEvent<HTMLElement>, 
+    _event: React.MouseEvent<HTMLElement>, 
     newLayers: string[]
   ) => {
     if (newLayers.length) {
@@ -299,7 +311,7 @@ export default function MapContainer({ searchQuery, onLocationSelect }: MapConta
   };
 
   const handleMapModeChange = (
-    event: React.MouseEvent<HTMLElement>, 
+    _event: React.MouseEvent<HTMLElement>, 
     newMode: 'pre' | 'post' | null
   ) => {
     if (newMode !== null) {
@@ -385,6 +397,7 @@ export default function MapContainer({ searchQuery, onLocationSelect }: MapConta
           <ToggleButton value="school">Schools</ToggleButton>
           <ToggleButton value="shelter">Shelters</ToggleButton>
           <ToggleButton value="infrastructure">Infrastructure</ToggleButton>
+          <ToggleButton value="bridge">Bridges</ToggleButton>
         </ToggleButtonGroup>
         
         {mapMode === 'post' && (

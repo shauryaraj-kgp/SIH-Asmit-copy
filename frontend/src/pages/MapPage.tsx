@@ -45,6 +45,7 @@ interface ExtendedLocation {
   damageDetails?: string;
   lastUpdated?: string;
   priority?: 'critical' | 'high' | 'medium' | 'low';
+  verifiedCount?: number;
 }
 
 export default function MapPage() {
@@ -82,65 +83,83 @@ export default function MapPage() {
   
   // Sample data for side panel - will be updated by map selection
   const [criticalLocations, setCriticalLocations] = useState<ExtendedLocation[]>([
-    { 
-      id: 1, 
-      name: 'Central Hospital', 
-      lat: 40.712, 
-      lng: -74.006, 
-      type: 'hospital', 
+    {
+      id: 1,
+      name: 'Colaba General Hospital',
+      lat: 18.907,
+      lng: 72.814,
+      type: 'hospital',
       status: 'operational',
       preDisasterStatus: 'operational',
       postDisasterStatus: 'damaged',
       priority: 'high',
-      damageDetails: 'Structural damage to east wing, operating at 60% capacity.'
+      damageDetails: 'Facade cracks and water ingress reported; ER operational with limited capacity.',
+      verifiedCount: 7
     },
-    { 
-      id: 2, 
-      name: 'North School', 
-      lat: 40.718, 
-      lng: -74.012, 
-      type: 'school', 
+    {
+      id: 2,
+      name: 'Navy Nagar Public School',
+      lat: 18.905,
+      lng: 72.812,
+      type: 'school',
       status: 'damaged',
       preDisasterStatus: 'operational',
       postDisasterStatus: 'damaged',
       priority: 'medium',
-      damageDetails: 'Roof collapsed in gymnasium. Main building appears intact.'
+      damageDetails: 'Roof damage in assembly hall; classes suspended pending structural inspection.',
+      verifiedCount: 3
     },
-    { 
-      id: 3, 
-      name: 'Main Bridge', 
-      lat: 40.710, 
-      lng: -74.002, 
-      type: 'infrastructure', 
+    {
+      id: 3,
+      name: 'Sassoon Dock Jetty',
+      lat: 18.915,
+      lng: 72.823,
+      type: 'bridge',
       status: 'destroyed',
       preDisasterStatus: 'operational',
       postDisasterStatus: 'destroyed',
       priority: 'critical',
-      damageDetails: 'Complete structural failure. Bridge has collapsed and is impassable.'
+      damageDetails: 'Severe deck damage with multiple spans compromised; closed for traffic.',
+      verifiedCount: 12
     },
-    { 
-      id: 4, 
-      name: 'Emergency Shelter', 
-      lat: 40.715, 
-      lng: -74.008, 
-      type: 'shelter', 
+    {
+      id: 6,
+      name: 'Colaba Jetty Bridge',
+      lat: 18.914,
+      lng: 72.826,
+      type: 'bridge',
+      status: 'damaged',
+      preDisasterStatus: 'operational',
+      postDisasterStatus: 'damaged',
+      priority: 'high',
+      damageDetails: 'Partial deck displacement and railing damage; restricted access in effect.',
+      verifiedCount: 5
+    },
+    {
+      id: 4,
+      name: 'Gateway Relief Shelter',
+      lat: 18.922,
+      lng: 72.834,
+      type: 'shelter',
       status: 'operational',
       preDisasterStatus: 'operational',
       postDisasterStatus: 'operational',
       priority: 'high',
-      damageDetails: 'Functioning as emergency shelter. Currently housing 87 people.'
+      damageDetails: 'Shelter active with ~200 occupants; supplies adequate for 36 hours.',
+      verifiedCount: 4
     },
     {
-      id: 5, 
-      name: 'City Power Substation Alpha', 
-      lat: 40.709, 
-      lng: -74.015, 
-      type: 'infrastructure', 
+      id: 5,
+      name: 'Colaba Substation',
+      lat: 18.911,
+      lng: 72.819,
+      type: 'infrastructure',
       status: 'damaged',
       preDisasterStatus: 'operational',
       postDisasterStatus: 'damaged',
       priority: 'critical',
-      damageDetails: 'Operating at 40% capacity. Repairs underway.'
+      damageDetails: 'Reduced output due to pump failures; water quality monitoring in progress.',
+      verifiedCount: 9
     }
   ]);
 
@@ -171,7 +190,7 @@ export default function MapPage() {
     };
   }, []);
   
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     if (newValue === 1) {
       setNewNotification(false); // Mark notifications as read
@@ -280,7 +299,7 @@ export default function MapPage() {
   const handleGetCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        (_position) => {
           setSnackbarMessage('Location acquired. Centering map...');
           setSnackbarOpen(true);
           // In a real app, we would pass these coordinates to the map component
@@ -303,7 +322,7 @@ export default function MapPage() {
   return (
     <Box>
       <Typography variant="h4" component="h1" gutterBottom>
-        Interactive Disaster Map
+        Coastal Impact Map
       </Typography>
       
       {/* Search and Controls Bar */}
@@ -428,7 +447,10 @@ export default function MapPage() {
             <Box sx={{ overflow: 'auto', height: '100%', maxHeight: { xs: '300px', md: 'calc(100vh - 300px)' } }}>
               {criticalLocations.length > 0 ? (
                 <List disablePadding>
-                  {criticalLocations.map((location) => (
+                  {criticalLocations
+                    .slice()
+                    .sort((a, b) => (b.verifiedCount || 0) - (a.verifiedCount || 0))
+                    .map((location) => (
                     <ListItem 
                       key={location.id}
                       divider
@@ -454,6 +476,9 @@ export default function MapPage() {
                         }}
                       />
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-end' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                          {(location.verifiedCount ?? 0).toString()}
+                        </Typography>
                         <Chip 
                           size="small" 
                           label={location.status} 

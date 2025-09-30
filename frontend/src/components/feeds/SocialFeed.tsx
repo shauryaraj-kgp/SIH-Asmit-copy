@@ -9,19 +9,7 @@ import {
   Twitter, Facebook, VerifiedUser, Search, Save,
   LocationOn, Public, ThumbUp, Comment, Share, Refresh
 } from '@mui/icons-material';
-import { postDisasterService, DisasterEvent } from '../../services/postDisasterService';
-
-// Backend social media post interface 
-interface SocialPostBackend {
-  content: string;
-  metadata: {
-    platform: string;
-    username?: string;
-    tags?: string[] | string;
-    timestamp?: string;
-    relevance_score?: number;
-  };
-}
+import { postDisasterService } from '../../services/postDisasterService';
 
 // Frontend social media post interface for display
 interface SocialPost {
@@ -44,12 +32,12 @@ const SAMPLE_POSTS: SocialPost[] = [
   {
     id: 1,
     platform: 'twitter',
-    username: 'Local News Network',
-    userHandle: '@localnews',
-    content: 'BREAKING: Main Bridge has collapsed following the earthquake. Avoid downtown area. Emergency services are responding. #DisasterResponse',
+    username: 'Mumbai Mirror',
+    userHandle: '@mumbaimirror',
+    content: 'BREAKING: Gateway of India area severely affected by coastal flooding. Colaba Causeway underwater. Avoid Marine Drive and Gateway area. #MumbaiFloods #Colaba',
     timestamp: '2025-05-01T12:15:00Z',
     relevanceScore: 0.92,
-    locationMention: 'Main Bridge',
+    locationMention: 'Gateway of India',
     hasMedia: true,
     verified: true,
     saved: true
@@ -57,12 +45,12 @@ const SAMPLE_POSTS: SocialPost[] = [
   {
     id: 2,
     platform: 'twitter',
-    username: 'Sarah Johnson',
-    userHandle: '@sarah_j',
-    content: 'Just passed by North Elementary School - roof of the gym has caved in. Rest of building looks ok from outside. #earthquake',
+    username: 'Priya Sharma',
+    userHandle: '@priya_mumbai',
+    content: 'Just evacuated from Colaba Market area. Water level rising rapidly near Sassoon Dock. Navy personnel helping with rescue operations. #ColabaFloods #Mumbai',
     timestamp: '2025-05-01T12:35:00Z',
     relevanceScore: 0.85,
-    locationMention: 'North Elementary School',
+    locationMention: 'Colaba Market',
     hasMedia: true,
     verified: false,
     saved: false
@@ -70,12 +58,12 @@ const SAMPLE_POSTS: SocialPost[] = [
   {
     id: 3,
     platform: 'facebook',
-    username: 'Community Emergency Group',
-    userHandle: 'CommunityEmergency',
-    content: 'UPDATE: Community Center is now open as an emergency shelter. We have capacity for about 200 people. Basic supplies and medical aid available. Please share with those in need.',
+    username: 'Mumbai Police',
+    userHandle: 'MumbaiPoliceOfficial',
+    content: 'URGENT: Gateway Relief Shelter at Colaba is operational. 500+ people evacuated from Colaba, Navy Nagar areas. Food and medical aid available. Contact 100 for emergency. #MumbaiPolice #Colaba',
     timestamp: '2025-05-01T14:05:00Z',
     relevanceScore: 0.94,
-    locationMention: 'Community Center',
+    locationMention: 'Gateway Relief Shelter',
     hasMedia: false,
     verified: true,
     saved: true
@@ -83,12 +71,12 @@ const SAMPLE_POSTS: SocialPost[] = [
   {
     id: 4,
     platform: 'twitter',
-    username: 'Mark Wilson',
-    userHandle: '@mark_wils',
-    content: 'Water coming out of tap looks brown. Anyone else experiencing this? Could the water treatment plant be affected? #earthquake #cityneedstoknow',
+    username: 'Rajesh Kumar',
+    userHandle: '@rajesh_colaba',
+    content: 'Water supply disrupted in Colaba area. BMC tankers deployed near Colaba Bus Depot. Avoid drinking tap water until further notice. #ColabaWaterCrisis #Mumbai',
     timestamp: '2025-05-01T15:22:00Z',
     relevanceScore: 0.78,
-    locationMention: 'Water Treatment Plant',
+    locationMention: 'Colaba Bus Depot',
     hasMedia: false,
     verified: false,
     saved: false
@@ -96,16 +84,146 @@ const SAMPLE_POSTS: SocialPost[] = [
   {
     id: 5,
     platform: 'facebook',
-    username: 'Central Hospital',
-    userHandle: 'CentralHospitalOfficial',
-    content: 'Central Hospital east wing has sustained damage. ER remains OPEN. Please only come if you have a genuine emergency. Non-critical patients are being diverted to South Medical Center.',
+    username: 'Colaba General Hospital',
+    userHandle: 'ColabaGeneralHospital',
+    content: 'Colaba General Hospital emergency services running 24/7. East wing damaged but ER operational. Ambulance services available. Contact 022-2287-1234 for emergencies. #ColabaHospital #Mumbai',
     timestamp: '2025-05-01T13:10:00Z',
     relevanceScore: 0.96,
-    locationMention: 'Central Hospital',
+    locationMention: 'Colaba General Hospital',
     hasMedia: true,
     verified: true,
     saved: true
   },
+  {
+    id: 6,
+    platform: 'twitter',
+    username: 'Mumbai Watch',
+    userHandle: '@mumbai_watch',
+    content: 'CONFIRMED HOTSPOT: Colaba General Hospital area. High footfall due to medical emergencies. Traffic diverted via Colaba Causeway. #ColabaHotspot #MumbaiFloods #verified',
+    timestamp: '2025-05-02T09:05:00Z',
+    relevanceScore: 0.91,
+    locationMention: 'Colaba General Hospital',
+    hasMedia: false,
+    verified: true,
+    saved: true
+  },
+  {
+    id: 7,
+    platform: 'twitter',
+    username: 'Navy Nagar Residents',
+    userHandle: '@navynagar_mumbai',
+    content: 'HOTSPOT VERIFIED: Navy Nagar Public School serving as relief center. 200+ families from Colaba area taking shelter. Navy personnel coordinating relief. #NavyNagar #ColabaRelief #verified',
+    timestamp: '2025-05-02T09:20:00Z',
+    relevanceScore: 0.89,
+    locationMention: 'Navy Nagar Public School',
+    hasMedia: true,
+    verified: true,
+    saved: false
+  },
+  {
+    id: 8,
+    platform: 'twitter',
+    username: 'Mumbai Port Trust',
+    userHandle: '@mumbai_port',
+    content: 'Sassoon Dock Jetty declared HOTSPOT. Fishing boats damaged, dock operations suspended. Relief boats deployed from Mumbai Port. #SassoonDock #ColabaPort #verified',
+    timestamp: '2025-05-02T09:32:00Z',
+    relevanceScore: 0.9,
+    locationMention: 'Sassoon Dock Jetty',
+    hasMedia: true,
+    verified: true,
+    saved: true
+  },
+  {
+    id: 9,
+    platform: 'twitter',
+    username: 'Mumbai Traffic Police',
+    userHandle: '@mumtraffic',
+    content: 'Colaba Jetty Bridge HOTSPOT: Bridge partially damaged, traffic restricted. Use alternative routes via Colaba Causeway or Marine Drive. #ColabaTraffic #MumbaiFloods #verified',
+    timestamp: '2025-05-02T09:40:00Z',
+    relevanceScore: 0.84,
+    locationMention: 'Colaba Jetty Bridge',
+    hasMedia: false,
+    verified: true,
+    saved: false
+  },
+  {
+    id: 10,
+    platform: 'twitter',
+    username: 'BMC Colaba',
+    userHandle: '@bmc_colaba',
+    content: 'Gateway Relief Shelter HOTSPOT: 300+ evacuees from Colaba, Navy Nagar, and Fort areas. Medical camp operational. Food distribution ongoing. #GatewayShelter #ColabaRelief #verified',
+    timestamp: '2025-05-02T09:55:00Z',
+    relevanceScore: 0.93,
+    locationMention: 'Gateway Relief Shelter',
+    hasMedia: false,
+    verified: true,
+    saved: true
+  },
+  {
+    id: 11,
+    platform: 'twitter',
+    username: 'MSEB Colaba',
+    userHandle: '@mseb_colaba',
+    content: 'Colaba Substation HOTSPOT: Power restoration in progress. 50% of Colaba area still without electricity. Generator backup at hospitals. #ColabaPower #MumbaiElectricity #verified',
+    timestamp: '2025-05-02T10:05:00Z',
+    relevanceScore: 0.87,
+    locationMention: 'Colaba Substation',
+    hasMedia: false,
+    verified: true,
+    saved: false
+  },
+  {
+    id: 12,
+    platform: 'facebook',
+    username: 'Colaba Residents Association',
+    userHandle: 'ColabaResidents',
+    content: 'UPDATE: Colaba Causeway partially cleared. Local shops in Colaba Market reopening. Water level receding near Gateway of India. Community kitchen operational at Colaba Social Hall. #ColabaRecovery #Mumbai',
+    timestamp: '2025-05-02T10:30:00Z',
+    relevanceScore: 0.88,
+    locationMention: 'Colaba Causeway',
+    hasMedia: true,
+    verified: true,
+    saved: true
+  },
+  {
+    id: 13,
+    platform: 'twitter',
+    username: 'Mumbai Fire Brigade',
+    userHandle: '@mumbaifire',
+    content: 'Fire rescue operations at Colaba Fort area. 15 families evacuated from waterlogged buildings. Fire station at Colaba responding to calls. #ColabaFireRescue #MumbaiFire',
+    timestamp: '2025-05-02T11:15:00Z',
+    relevanceScore: 0.82,
+    locationMention: 'Colaba Fort',
+    hasMedia: true,
+    verified: true,
+    saved: false
+  },
+  {
+    id: 14,
+    platform: 'twitter',
+    username: 'Indian Navy',
+    userHandle: '@indiannavy',
+    content: 'Navy personnel deployed for rescue operations in Colaba and Navy Nagar areas. Naval helicopters conducting aerial survey. INS Mumbai coordinating relief efforts. #IndianNavy #ColabaRescue',
+    timestamp: '2025-05-02T11:45:00Z',
+    relevanceScore: 0.95,
+    locationMention: 'Navy Nagar',
+    hasMedia: true,
+    verified: true,
+    saved: true
+  },
+  {
+    id: 15,
+    platform: 'facebook',
+    username: 'Colaba Social Workers',
+    userHandle: 'ColabaSocialWorkers',
+    content: 'Community relief center at Colaba Social Hall serving 500+ people. Hot meals, medical aid, and temporary shelter available. Volunteers from Colaba community actively helping. #ColabaCommunity #MumbaiRelief',
+    timestamp: '2025-05-02T12:00:00Z',
+    relevanceScore: 0.86,
+    locationMention: 'Colaba Social Hall',
+    hasMedia: false,
+    verified: true,
+    saved: true
+  }
 ];
 
 export default function SocialFeed() {
@@ -113,136 +231,30 @@ export default function SocialFeed() {
   const [feedTab, setFeedTab] = useState(0);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
   
-  // New state for managing posts from backend
-  const [posts, setPosts] = useState<SocialPost[]>([]);
+  // Use sample posts directly
+  const [posts, setPosts] = useState<SocialPost[]>(SAMPLE_POSTS);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(new Date());
 
   useEffect(() => {
-    // Fetch social media data when component mounts
-    fetchSocialMediaData();
+    // Set sample posts immediately
+    setPosts(SAMPLE_POSTS);
+    setLastRefreshed(new Date());
   }, []);
   
   const fetchSocialMediaData = async () => {
     setIsLoading(true);
     setError(null);
     
-    try {
-      // Define a disaster event to query for - using a sample event
-      const event: DisasterEvent = {
-        event_name: "Sample Disaster", // Can be made dynamic based on user selection
-        start_date: "2025-04-28", // One month before current date
-        end_date: "2025-05-02", // Current date
-        max_results: 20
-      };
-      
-      // First, try to fetch social media data
-      let socialData;
-      try {
-        // This triggers data collection and storage in RAG
-        await postDisasterService.fetchSocialData(event);
-        
-        // Now query the RAG database for the stored social posts
-        socialData = await postDisasterService.queryRAG(
-          event.event_name, 
-          ["socials"],
-          30
-        );
-      } catch (error) {
-        console.error("Error fetching social data:", error);
-        throw new Error("Failed to fetch social media data");
-      }
-      
-      // Transform backend data format to frontend format
-      const transformedPosts: SocialPost[] = [];
-      let idCounter = 1;
-      
-      if (socialData && socialData.results) {
-        for (const item of socialData.results) {
-          // Extract location mentions by looking for common location terms
-          const locationMention = extractLocationMention(item.content);
-          
-          // Parse tags
-          let tags: string[] = [];
-          if (item.metadata.tags) {
-            try {
-              // Tags might be stored as a JSON string or as an array
-              if (typeof item.metadata.tags === 'string') {
-                if (item.metadata.tags.startsWith('[')) {
-                  tags = JSON.parse(item.metadata.tags);
-                } else {
-                  tags = item.metadata.tags.split(',').map((tag: string) => tag.trim());
-                }
-              } else if (Array.isArray(item.metadata.tags)) {
-                tags = item.metadata.tags;
-              }
-            } catch (e) {
-              console.warn("Error parsing tags:", e);
-            }
-          }
-          
-          // Detect media by looking for URLs or media keywords
-          const hasMedia = item.content.includes('http') || 
-                          item.content.includes('photo') || 
-                          item.content.includes('image') ||
-                          item.content.includes('video');
-          
-          transformedPosts.push({
-            id: idCounter++,
-            platform: (item.metadata.platform?.toLowerCase() || 'twitter') as 'twitter' | 'facebook' | 'instagram' | string,
-            username: item.metadata.username || "Unknown User",
-            userHandle: `@${item.metadata.username?.toLowerCase().replace(/\s+/g, '_') || "user"}`,
-            content: item.content,
-            timestamp: item.metadata.timestamp || new Date().toISOString(),
-            relevanceScore: item.metadata.relevance_score || Math.random() * 0.5 + 0.5, // Random score between 0.5 and 1.0
-            locationMention,
-            hasMedia,
-            verified: Math.random() > 0.7, // Randomly assign verification status (70% unverified)
-            saved: false,
-            tags
-          });
-        }
-      }
-      
-      // If we got data from the backend, use it; otherwise use sample data
-      if (transformedPosts.length > 0) {
-        setPosts(transformedPosts);
-      } else {
-        console.log("No social media data found, using sample data");
-        setPosts(SAMPLE_POSTS);
-      }
-      
-      setLastRefreshed(new Date());
-      
-    } catch (fetchError) {
-      console.error("Error in fetchSocialMediaData:", fetchError);
-      setError("Failed to load social media data. Using sample data instead.");
+    // Simulate a brief loading state
+    setTimeout(() => {
       setPosts(SAMPLE_POSTS);
-    } finally {
+      setLastRefreshed(new Date());
       setIsLoading(false);
-    }
+    }, 500);
   };
   
-  // Helper function to extract location mentions from post content
-  const extractLocationMention = (content: string): string | undefined => {
-    // Common location indicators
-    const locationPatterns = [
-      /at\s+([A-Z][a-z]+ (?:Road|Street|Avenue|Lane|Bridge|Hospital|School|Park|Center|Building|Plaza))/i,
-      /in\s+([A-Z][a-z]+ (?:Park|Square|Mall|Center|Hospital|School))/i,
-      /near\s+([A-Z][a-z]+ (?:Road|Street|Avenue|Lane|Bridge|Hospital|School|Park|Center|Building|Plaza))/i,
-      /(\w+ (?:Bridge|Hospital|School|Airport|Station|Center))/i,
-    ];
-    
-    for (const pattern of locationPatterns) {
-      const match = content.match(pattern);
-      if (match && match[1]) {
-        return match[1];
-      }
-    }
-    
-    return undefined;
-  };
   
   const handleFeedTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setFeedTab(newValue);
@@ -397,7 +409,7 @@ export default function SocialFeed() {
           Monitoring social media for disaster updates. 
           {lastRefreshed ? 
             ` Last updated ${new Date(lastRefreshed).toLocaleTimeString()}` : 
-            ' Fetching data...'}
+            ' Ready'}
         </Alert>
       </Paper>
       
